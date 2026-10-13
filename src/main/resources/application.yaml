@@ -1,3 +1,21 @@
 spring:
   application:
     name: sync-sight
+  datasource:
+    url: jdbc:sqlserver://HOPROSYSACIDB1;encrypt=true;trustServerCertificate=true;databaseName=Promo
+    username: "ProMoSysAdmin"
+    password: "p@ssw0rd1"
+
+vs6-enterprise:
+  api:
+    base-url: https://visualstore.visualstore.smretailinc.com/vs
+    auth:
+      token: /auth/token
+      username: "admin"
+      password: "password.VS6.1234"
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSS} %-5level: %msg%n"
+  level:
+    com.zaxxer.hikari: WARN
