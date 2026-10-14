@@ -6,106 +6,113 @@
     <title>Starting Promotions</title>
     <style>
         :root {
-          --bg: #ffffff; --text: #1f2328; --muted: #6b7280; --line: #d8dee4; --head: #f3f4f6;
+          --bg:#ffffff; --fg:#1f2328; --muted:#6b7280; --line:#d8dee4; --head:#f3f4f6;
         }
         @media (prefers-color-scheme: dark) {
-          :root { --bg: #14161a; --text: #e6e8eb; --muted: #9aa3af; --line: #2d333b; --head: #1c2027; }
+          :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --line:#30363d; --head:#161b22; }
         }
-        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text);
-               margin: 0; padding: 24px; }
-        h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .5px; }
-        .meta { color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
-        .notice { background: #fff4d6; color: #5c4400; padding: 10px 14px; border-radius: 8px; }
-        .tabs { display: flex; gap: 8px; margin: 16px 0 10px; }
-        .tab { padding: 6px 16px; border: 1px solid var(--line); border-radius: 8px; }
-        .tab.active { background: var(--text); color: var(--bg); }
-        .tab.disabled { color: var(--muted); border-style: dashed; }
-        .actions { margin-bottom: 10px; display: flex; gap: 8px; }
-        button { padding: 6px 14px; border: 1px solid var(--line); border-radius: 8px;
-                 background: var(--head); color: var(--text); cursor: pointer; }
+        body { margin:0; padding:24px; background:var(--bg); color:var(--fg);
+               font-family:system-ui, Segoe UI, Arial, sans-serif; font-size:14px; }
+        h1 { margin:0 0 4px; font-size:22px; letter-spacing:.5px; }
+        .meta { color:var(--muted); line-height:1.6; margin-bottom:16px; }
+        .meta b { color:var(--fg); }
 
-        .row { display: grid; align-items: center; gap: 12px; padding: 10px 12px;
-               grid-template-columns: 22px 90px 1.3fr 90px 100px 100px 1.4fr; }
-        .head { background: var(--head); font-weight: 600; border: 1px solid var(--line);
-                border-radius: 8px 8px 0 0; }
-        details { border: 1px solid var(--line); border-top: none; }
-        summary { list-style: none; cursor: pointer; }
-        summary::-webkit-details-marker { display: none; }
-        .chev { display: inline-block; transition: transform .15s; color: var(--muted); }
-        details[open] .chev { transform: rotate(90deg); }
+        .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:12px; }
+        .tab { padding:8px 16px; border:1px solid transparent; border-bottom:none; border-radius:6px 6px 0 0;
+               text-decoration:none; color:var(--muted); }
+        .tab.active { color:var(--fg); font-weight:600; border-color:var(--line); background:var(--head); }
+        .tab.disabled { opacity:.5; cursor:not-allowed; }
 
-        table.stores { width: 100%; border-collapse: collapse; margin: 0 0 10px; }
-        table.stores th, table.stores td { text-align: left; padding: 6px 12px 6px 44px; }
-        table.stores th { color: var(--muted); font-weight: 600; font-size: 13px; }
-        table.stores td + td, table.stores th + th { padding-left: 12px; }
+        .actions { margin-bottom:12px; display:flex; gap:8px; }
+        button { padding:6px 12px; border:1px solid var(--line); background:var(--head); color:var(--fg);
+                 border-radius:6px; cursor:pointer; }
+        button:hover { border-color:var(--muted); }
 
-        .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13px; }
-        .st-active { background: #d9f2e1; color: #14532d; }
-        .st-new { background: #dbeafe; color: #1e3a8a; }
-        .st-inactive { background: #e5e7eb; color: #374151; }
-        .st-cancelled, .st-missing { background: #fde2e2; color: #7f1d1d; }
-        .st-api-error, .st-connection-error { background: #ffedd5; color: #7c2d12; }
-        .st-no-local-site { background: transparent; color: var(--muted); border: 1px dashed var(--line); }
-        .st-unknown { background: #ede9fe; color: #4c1d95; }
+        .row { display:grid; grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr; gap:8px; padding:8px 10px; align-items:center; }
+        .row.head { background:var(--head); font-weight:600; border:1px solid var(--line); border-radius:6px 6px 0 0; }
+        details.promo { border:1px solid var(--line); border-top:none; }
+        details.promo[open] { background:var(--head); }
+        summary { list-style:none; cursor:pointer; }
+        summary::-webkit-details-marker { display:none; }
+        summary span:first-child::before { content:"▸ "; color:var(--muted); }
+        details[open] summary span:first-child::before { content:"▾ "; }
+
+        table.stores { margin:0 0 10px 28px; border-collapse:collapse; background:var(--bg); }
+        table.stores th, table.stores td { padding:5px 14px; border:1px solid var(--line); text-align:left; }
+        table.stores th { background:var(--head); }
+
+        .badge { display:inline-block; padding:2px 8px; border-radius:10px; color:#fff; font-size:12px;
+                 background:var(--c, #6b7280); }
+        .status-active { --c:#1a7f37; }
+        .status-new { --c:#0969da; }
+        .status-inactive { --c:#6b7280; }
+        .status-cancelled { --c:#cf222e; }
+        .status-missing { --c:#bf8700; }
+        .status-api-error { --c:#d4620a; }
+        .status-connection-error { --c:#a40e26; }
+        .status-no-local-site { --c:#8c959f; }
+        .status-unknown { --c:#8250df; }
+
+        .empty { padding:24px; color:var(--muted); border:1px dashed var(--line); border-radius:6px; }
     </style>
 </head>
 <body>
 
 <h1>STARTING PROMOTIONS</h1>
 <div class="meta">
-    <div th:text="${today}">10-14-26</div>
-    <div>Retrieved Time: <span th:text="${retrievedTime}">--:--:--</span></div>
-    <div>No. of Promos: <span th:text="${promos.size()}">0</span></div>
+    <div th:text="${today}">Wednesday, October 14, 2026</div>
+    <div>Retrieved Time: <b th:text="${retrievedTime}">00:00:00</b></div>
+    <div>No. of Promos: <b th:text="${promoCount}">0</b></div>
 </div>
 
-<p class="notice" th:if="${retrievedTime == null}">
-    Still loading the data from Enterprise and the stores. Please reload in a few minutes.
-</p>
-
-<div class="tabs">
-    <span class="tab active">All</span>
-    <span class="tab disabled">Anomalies</span>
-</div>
+<nav class="tabs">
+    <a class="tab active" href="/">All</a>
+    <span class="tab disabled" title="Coming soon">Anomalies</span>
+</nav>
 
 <div class="actions">
     <button type="button" onclick="setAll(true)">Expand All</button>
     <button type="button" onclick="setAll(false)">Collapse All</button>
 </div>
 
-<div class="row head">
-    <span></span><span>Promo ID</span><span>Memo Number</span><span>Store Count</span>
-    <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
+<div class="empty" th:if="${promos.isEmpty()}" th:text="${emptyMessage}"></div>
+
+<div th:unless="${promos.isEmpty()}">
+    <div class="row head">
+        <span>Promo ID</span><span>Memo Number</span><span>Store Count</span>
+        <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
+    </div>
+
+    <details class="promo" th:each="p : ${promos}">
+        <summary class="row">
+            <span th:text="${p.promoId()}">73294</span>
+            <span th:text="${p.memoNumber()}">SURP-0001-26</span>
+            <span th:text="${p.storeCount()}">2</span>
+            <span th:text="${p.startDate()}">10-14-26</span>
+            <span th:text="${p.endDate()}">10-16-26</span>
+            <span th:text="${p.duration()}">3 days</span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${p.stores()}">
+                <td th:text="${s.storeId()}">1</td>
+                <td th:text="${s.storeName()}">SM Megamall</td>
+                <td><span class="badge" th:classappend="${s.enterpriseClass()}" th:text="${s.enterpriseLabel()}">Active</span></td>
+                <td><span class="badge" th:classappend="${s.localClass()}" th:text="${s.localLabel()}">Active</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
 </div>
 
-<details th:each="p : ${promos}">
-    <summary class="row">
-        <span class="chev">&#9654;</span>
-        <span th:text="${p.promoId()}">73294</span>
-        <span th:text="${p.memoNumber()}">SURP-0001-26</span>
-        <span th:text="${p.storeCount()}">2</span>
-        <span th:text="${p.startDate()}">10-14-26</span>
-        <span th:text="${p.endDate()}">10-16-26</span>
-        <span th:text="${p.duration()}">3 days</span>
-    </summary>
-
-    <table class="stores">
-        <thead>
-        <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th></tr>
-        </thead>
-        <tbody>
-        <tr th:each="s : ${p.stores()}">
-            <td th:text="${s.storeId()}">1</td>
-            <td th:text="${s.storeName()}">SM Megamall</td>
-            <td><span class="badge" th:classappend="${s.enterpriseClass()}" th:text="${s.enterprise()}">Active</span></td>
-            <td><span class="badge" th:classappend="${s.localClass()}" th:text="${s.local()}">Active</span></td>
-        </tr>
-        </tbody>
-    </table>
-</details>
-
 <script>
+    // Open or close every promo row
     function setAll(open) {
-      document.querySelectorAll('details').forEach(function (d) { d.open = open; });
+      document.querySelectorAll('details.promo').forEach(function (d) { d.open = open; });
     }
 </script>
 </body>

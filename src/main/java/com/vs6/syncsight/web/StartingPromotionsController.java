@@ -14,11 +14,14 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Controller
 public class StartingPromotionsController {
 
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("MM-dd-yy");
+    private static final DateTimeFormatter HEADER_DATE =
+            DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH);   // Wednesday, October 14, 2026
+    private static final DateTimeFormatter ROW_DATE = DateTimeFormatter.ofPattern("MM-dd-yy");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final PromotionSyncService syncService;
@@ -27,7 +30,6 @@ public class StartingPromotionsController {
         this.syncService = syncService;
     }
 
-    // Opening http://localhost:8080 goes to the page
     @GetMapping("/")
     public String home() {
         return "redirect:/starting-promotions";
@@ -40,14 +42,19 @@ public class StartingPromotionsController {
                 .map(this::toView)
                 .toList();
 
-        model.addAttribute("today", LocalDate.now().format(DATE));
+        String emptyMessage = refreshed == null
+                ? "Still loading the data from Enterprise and the stores. Please reload in a few minutes."
+                : "No promotions start today.";
+
+        model.addAttribute("today", LocalDate.now().format(HEADER_DATE));
         model.addAttribute("retrievedTime",
-                refreshed == null ? null : TIME.format(refreshed.atZone(ZoneId.systemDefault())));
+                refreshed == null ? "--:--:--" : TIME.format(refreshed.atZone(ZoneId.systemDefault())));
+        model.addAttribute("promoCount", promos.size());
         model.addAttribute("promos", promos);
-        return "starting-promotions";      // = templates/starting-promotions.html
+        model.addAttribute("emptyMessage", emptyMessage);
+        return "starting-promotions";
     }
 
-    // Turn the report into text that is ready to show
     private PromoView toView(StartingPromotionStatus status) {
         StartingPromotion p = status.promo();
         List<StoreView> stores = status.stores().stream().map(this::toStoreView).toList();
@@ -55,8 +62,8 @@ public class StartingPromotionsController {
                 p.promoId(),
                 p.memoNumber(),
                 p.storeCount(),
-                p.startDate().format(DATE),
-                p.endDate().format(DATE),
+                p.startDate().format(ROW_DATE),
+                p.endDate().format(ROW_DATE),
                 p.durationText(),
                 stores);
     }
@@ -71,17 +78,16 @@ public class StartingPromotionsController {
                 cssClass(row.local()));
     }
 
-    // PromoStatus.API_ERROR becomes "st-api-error" (used for the badge color)
+    // PromoStatus.API_ERROR becomes "status-api-error" (matches the CSS in the template)
     private String cssClass(PromoStatus status) {
-        return "st-" + status.name().toLowerCase().replace('_', '-');
+        return "status-" + status.name().toLowerCase().replace('_', '-');
     }
 
-    // The "ready to show" shapes
     public record PromoView(int promoId, String memoNumber, int storeCount,
                             String startDate, String endDate, String duration,
                             List<StoreView> stores) {}
 
     public record StoreView(int storeId, String storeName,
-                            String enterprise, String enterpriseClass,
-                            String local, String localClass) {}
+                            String enterpriseLabel, String enterpriseClass,
+                            String localLabel, String localClass) {}
 }
