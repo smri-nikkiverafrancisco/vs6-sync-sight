@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import com.vs6.syncsight.exception.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,19 +56,18 @@ public class AuthTokenService {
                     .block();
 
             if (response == null || response.accessToken() == null) {
-                throw new IllegalStateException("Login worked but no token came back from [" + baseUrl + "]");
+                throw new ApiResponseException("Login worked but no token came back from [" + baseUrl + "]");
             }
 
             long expiresAt = System.currentTimeMillis() + (response.expiresIn() - 60) * 1000L;
             return new CachedToken(response.accessToken(), expiresAt);
 
         } catch (WebClientResponseException.Unauthorized e) {
-            throw new IllegalStateException("Invalid Username/Password for [" + baseUrl + "]", e);
+            throw new ApiResponseException("Invalid Username/Password for [" + baseUrl + "]", e);
         } catch (WebClientResponseException e) {
-            throw new IllegalStateException(
-                    "Login at [" + baseUrl + "] answered " + e.getStatusCode().value(), e);
+            throw new ApiResponseException("Login at [" + baseUrl + "] answered " + e.getStatusCode().value(), e);
         } catch (WebClientRequestException e) {
-            throw new IllegalStateException("Cannot reach [" + baseUrl + "]. Check the URL, network or VPN.", e);
+            throw new ConnectionFailedException("Cannot reach [" + baseUrl + "]. Check the URL, network or VPN.", e);
         }
     }
 

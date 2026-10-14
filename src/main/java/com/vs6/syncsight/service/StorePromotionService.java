@@ -1,5 +1,6 @@
 package com.vs6.syncsight.service;
 
+import com.vs6.syncsight.exception.*;
 import com.vs6.syncsight.model.FindByFilterRequest;
 import com.vs6.syncsight.model.FindByFilterResponse;
 import com.vs6.syncsight.model.StorePromotion;
@@ -41,11 +42,11 @@ public class StorePromotionService {
             return response.data();
 
         } catch (WebClientResponseException e) {
-            throw new IllegalStateException(
+            throw new ApiResponseException(
                     "Store " + storeId + " [" + baseUrl + "]: server answered "
                             + e.getStatusCode().value(), e);
         } catch (WebClientRequestException e) {
-            throw new IllegalStateException("Cannot reach [" + baseUrl + "]", e);
+            throw new ConnectionFailedException("Cannot reach [" + baseUrl + "]", e);
         }
     }
 }
