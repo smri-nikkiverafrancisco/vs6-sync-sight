@@ -5,6 +5,8 @@ spring:
     url: jdbc:sqlserver://HOPROSYSACIDB1;encrypt=true;trustServerCertificate=true;databaseName=Promo
     username: "ProMoSysAdmin"
     password: "p@ssw0rd1"
+  thymeleaf:
+    cache: false
 
 vs6-enterprise:
   api:
