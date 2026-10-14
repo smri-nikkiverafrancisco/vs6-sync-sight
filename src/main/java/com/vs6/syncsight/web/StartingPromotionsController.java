@@ -5,9 +5,11 @@ import com.vs6.syncsight.model.StartingPromotion;
 import com.vs6.syncsight.model.StartingPromotionStatus;
 import com.vs6.syncsight.model.StoreStatusRow;
 import com.vs6.syncsight.service.PromotionSyncService;
+import com.vs6.syncsight.service.PromotionSyncService.RefreshStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -35,16 +37,31 @@ public class StartingPromotionsController {
         return "redirect:/starting-promotions";
     }
 
+    @PostMapping("/starting-promotions/refresh")
+    public String refresh() {
+        syncService.startRefresh();
+        return "redirect:/starting-promotions";
+    }
+
     @GetMapping("/starting-promotions")
     public String page(Model model) {
         Instant refreshed = syncService.getLastRefreshed();
+        RefreshStatus status = syncService.getStatus();
         List<PromoView> promos = syncService.getStartingReport().stream()
                 .map(this::toView)
                 .toList();
 
-        String emptyMessage = refreshed == null
-                ? "Still loading the data from Enterprise and the stores. Please reload in a few minutes."
-                : "No promotions start today.";
+        String emptyMessage;
+        if (refreshed == null) {
+            emptyMessage = status.running()
+                    ? "Loading the data... this page reloads by itself."
+                    : "No data yet. Click Refresh.";
+        } else {
+            emptyMessage = "No promotions start today.";
+        }
+
+        String refreshText = status.stage()
+                + (status.total() > 0 ? " (" + status.done() + "/" + status.total() + " stores)" : "");
 
         model.addAttribute("today", LocalDate.now().format(HEADER_DATE));
         model.addAttribute("retrievedTime",
@@ -52,6 +69,9 @@ public class StartingPromotionsController {
         model.addAttribute("promoCount", promos.size());
         model.addAttribute("promos", promos);
         model.addAttribute("emptyMessage", emptyMessage);
+        model.addAttribute("refreshing", status.running());
+        model.addAttribute("refreshText", refreshText);
+        model.addAttribute("refreshError", status.lastError());
         return "starting-promotions";
     }
 

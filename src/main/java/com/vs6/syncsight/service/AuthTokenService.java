@@ -2,16 +2,17 @@ package com.vs6.syncsight.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.vs6.syncsight.exception.ApiResponseException;
+import com.vs6.syncsight.exception.ConnectionFailedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import com.vs6.syncsight.exception.*;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AuthTokenService {
@@ -21,8 +22,10 @@ public class AuthTokenService {
     private final String username;
     private final String password;
 
-    // The key rack: one wristband per address
-    private final Map<String, CachedToken> tokens = new HashMap<>();
+    // The key rack: one wristband per address (safe for many workers at once)
+    private final Map<String, CachedToken> tokens = new ConcurrentHashMap<>();
+    // One lock per address, so only workers asking for the SAME address wait for each other
+    private final Map<String, Object> locks = new ConcurrentHashMap<>();
 
     public AuthTokenService(
             WebClient webClient,
@@ -36,13 +39,24 @@ public class AuthTokenService {
     }
 
     // "Give me a good wristband for THIS address."
-    public synchronized String getAccessToken(String baseUrl) {
+    public String getAccessToken(String baseUrl) {
         CachedToken cached = tokens.get(baseUrl);
-        if (cached == null || System.currentTimeMillis() >= cached.expiresAtMillis()) {
-            cached = requestNewToken(baseUrl);
-            tokens.put(baseUrl, cached);
+        if (isValid(cached)) {
+            return cached.accessToken();
         }
-        return cached.accessToken();
+
+        synchronized (locks.computeIfAbsent(baseUrl, k -> new Object())) {
+            cached = tokens.get(baseUrl);          // someone else may have just fetched it
+            if (!isValid(cached)) {
+                cached = requestNewToken(baseUrl);
+                tokens.put(baseUrl, cached);
+            }
+            return cached.accessToken();
+        }
+    }
+
+    private boolean isValid(CachedToken token) {
+        return token != null && System.currentTimeMillis() < token.expiresAtMillis();
     }
 
     private CachedToken requestNewToken(String baseUrl) {

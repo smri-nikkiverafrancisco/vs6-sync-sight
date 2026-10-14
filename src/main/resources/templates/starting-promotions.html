@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Starting Promotions</title>
+    <meta http-equiv="refresh" content="5" th:if="${refreshing}">
     <style>
         :root {
           --bg:#ffffff; --fg:#1f2328; --muted:#6b7280; --line:#d8dee4; --head:#f3f4f6;
@@ -73,7 +74,14 @@
 <div class="actions">
     <button type="button" onclick="setAll(true)">Expand All</button>
     <button type="button" onclick="setAll(false)">Collapse All</button>
+    <form method="post" action="/starting-promotions/refresh" style="margin-left:auto">
+        <button type="submit" th:disabled="${refreshing}"
+                th:text="${refreshing} ? 'Refreshing...' : 'Refresh'">Refresh</button>
+    </form>
 </div>
+
+<div class="meta" th:if="${refreshing}" th:text="${refreshText}"></div>
+<div class="meta" th:if="${refreshError != null}" th:text="'Last refresh failed: ' + ${refreshError}"></div>
 
 <div class="empty" th:if="${promos.isEmpty()}" th:text="${emptyMessage}"></div>
 
