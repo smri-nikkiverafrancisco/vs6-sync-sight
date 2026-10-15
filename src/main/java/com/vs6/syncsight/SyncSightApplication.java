@@ -22,15 +22,4 @@ public class SyncSightApplication {
 	CommandLineRunner refreshOnStart(PromotionSyncService syncService) {
 		return args -> syncService.startRefresh();
 	}
-
-//	@Bean
-//	CommandLineRunner refreshOnStart(PromotionSyncService syncService) {
-//		return args -> {
-//			try {
-//				syncService.refresh();
-//			} catch (Exception e) {
-//				log.error("Refresh failed: {}", e.getMessage());
-//			}
-//		};
-//	}
 }

@@ -31,6 +31,10 @@ public class StartingPromotionService {
                     FROM smvs_promotions p
                     INNER JOIN smvs_promotion_stores ps
                         ON p.PromoID = ps.PromoId
+                    INNER JOIN promotions pr
+                        ON p.XMLPromoId = pr.PromoId
+                    INNER JOIN promotypes pt
+                         ON pr.PromoTypeId = pt.PromoTypeId AND LOWER(pt.TypeDesc) NOT LIKE '%no pos scanning%'
                     WHERE p.ActiveDateFrom = CAST(GETDATE() AS DATE)
                 )
                 SELECT
