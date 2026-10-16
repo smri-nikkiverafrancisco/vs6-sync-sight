@@ -18,6 +18,12 @@
         .meta { color:var(--muted); line-height:1.6; margin-bottom:16px; }
         .meta b { color:var(--fg); }
 
+        .viewbar { display:flex; align-items:center; gap:10px; margin-bottom:12px; color:var(--muted); }
+        .switch { display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+        .switch a { padding:5px 14px; text-decoration:none; color:var(--muted); }
+        .switch a + a { border-left:1px solid var(--line); }
+        .switch a.active { background:var(--head); color:var(--fg); font-weight:600; }
+
         .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:12px; }
         .tab { padding:8px 16px; border:1px solid transparent; border-bottom:none; border-radius:6px 6px 0 0;
                text-decoration:none; color:var(--muted); }
@@ -35,6 +41,8 @@
 
         .row { display:grid; grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr; gap:8px; padding:8px 10px; align-items:center; }
         .row.sev { grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr .9fr; }
+        .row.bystore { grid-template-columns:1fr 2.4fr 1.2fr .9fr; }
+        .row.bystore-all { grid-template-columns:1fr 2.4fr 2.1fr; }
         .row.head { background:var(--head); font-weight:600; border:1px solid var(--line); border-radius:6px 6px 0 0; }
         details.promo { border:1px solid var(--line); border-top:none; }
         details.promo[open] { background:var(--head); }
@@ -73,9 +81,22 @@
     <div>No. of Promos: <b th:text="${promoCount}">0</b></div>
 </div>
 
+<!-- Group by: applies to BOTH tabs -->
+<div class="viewbar">
+    <span>Group by</span>
+    <div class="switch">
+        <a th:classappend="${view == 'promo'} ? 'active'"
+           th:href="@{/starting-promotions(tab=${tab},view='promo')}">By Promo</a>
+        <a th:classappend="${view == 'store'} ? 'active'"
+           th:href="@{/starting-promotions(tab=${tab},view='store')}">By Store</a>
+    </div>
+</div>
+
 <nav class="tabs">
-    <a class="tab" th:classappend="${tab == 'all'} ? 'active'" href="/starting-promotions">All</a>
-    <a class="tab" th:classappend="${tab == 'anomalies'} ? 'active'" href="/starting-promotions?tab=anomalies">
+    <a class="tab" th:classappend="${tab == 'all'} ? 'active'"
+       th:href="@{/starting-promotions(tab='all',view=${view})}">All</a>
+    <a class="tab" th:classappend="${tab == 'anomalies'} ? 'active'"
+       th:href="@{/starting-promotions(tab='anomalies',view=${view})}">
         Anomalies
         <span class="count crit" th:if="${criticalCount > 0}" th:text="${criticalCount}">0</span>
         <span class="count warn" th:if="${warningCount > 0}" th:text="${warningCount}">0</span>
@@ -87,6 +108,7 @@
     <button type="button" onclick="setAll(false)">Collapse All</button>
     <form method="post" action="/starting-promotions/refresh" style="margin-left:auto">
         <input type="hidden" name="tab" th:value="${tab}">
+        <input type="hidden" name="view" th:value="${view}">
         <button type="submit" th:disabled="${refreshing}"
                 th:text="${refreshing} ? 'Refreshing...' : 'Refresh'">Refresh</button>
     </form>
@@ -97,8 +119,8 @@
 
 <div class="empty" th:if="${nothingToShow}" th:text="${emptyMessage}"></div>
 
-<!-- ================= ALL TAB ================= -->
-<div th:if="${tab == 'all' and not nothingToShow}">
+<!-- ================= ALL TAB: BY PROMO ================= -->
+<div th:if="${tab == 'all' and view == 'promo' and not nothingToShow}">
     <div class="row head">
         <span>Promo ID</span><span>Memo Number</span><span>Store Count</span>
         <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
@@ -130,8 +152,40 @@
     </details>
 </div>
 
-<!-- ================= ANOMALIES TAB ================= -->
-<div th:if="${tab == 'anomalies' and not nothingToShow}">
+<!-- ================= ALL TAB: BY STORE ================= -->
+<div th:if="${tab == 'all' and view == 'store' and not nothingToShow}">
+    <div class="row head bystore-all">
+        <span>Store ID</span><span>Store Name</span><span>Promos</span>
+    </div>
+
+    <details class="promo" th:each="g : ${allStoreGroups}">
+        <summary class="row bystore-all">
+            <span th:text="${g.storeId()}">2</span>
+            <span th:text="${g.storeName()}">SM Megamall</span>
+            <span th:text="${g.promoCountText()}">120 promos</span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Promo ID</th><th>Memo Number</th><th>Start Date</th><th>End Date</th>
+                <th>Enterprise</th><th>Local</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${g.promos()}">
+                <td th:text="${p.promoId()}">73294</td>
+                <td th:text="${p.memoNumber()}">SURP-0001-26</td>
+                <td th:text="${p.startDate()}">10-14-26</td>
+                <td th:text="${p.endDate()}">10-16-26</td>
+                <td><span class="badge" th:classappend="${p.enterpriseClass()}" th:text="${p.enterpriseLabel()}">Active</span></td>
+                <td><span class="badge" th:classappend="${p.localClass()}" th:text="${p.localLabel()}">Active</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</div>
+
+<!-- ================= ANOMALIES TAB: BY PROMO ================= -->
+<div th:if="${tab == 'anomalies' and view == 'promo' and not nothingToShow}">
     <div class="row head sev">
         <span>Promo ID</span><span>Memo Number</span><span>Stores</span>
         <span>Start Date</span><span>End Date</span><span>Promo Duration</span><span>Severity</span>
@@ -150,7 +204,7 @@
 
         <table class="stores">
             <thead>
-            <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th><th>Severity</th><th>Reason</th></tr>
+            <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th><th>Severity</th></tr>
             </thead>
             <tbody>
             <tr th:each="s : ${a.stores()}">
@@ -159,7 +213,40 @@
                 <td><span class="badge" th:classappend="${s.enterpriseClass()}" th:text="${s.enterpriseLabel()}">Active</span></td>
                 <td><span class="badge" th:classappend="${s.localClass()}" th:text="${s.localLabel()}">Missing</span></td>
                 <td><span class="badge" th:classappend="${s.severityClass()}" th:text="${s.severityLabel()}">Critical</span></td>
-                <td th:text="${s.reason()}">Local: Missing</td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</div>
+
+<!-- ================= ANOMALIES TAB: BY STORE ================= -->
+<div th:if="${tab == 'anomalies' and view == 'store' and not nothingToShow}">
+    <div class="row head bystore">
+        <span>Store ID</span><span>Store Name</span><span>Anomalies</span><span>Severity</span>
+    </div>
+
+    <details class="promo" th:each="g : ${anomalyStoreGroups}">
+        <summary class="row bystore">
+            <span th:text="${g.storeId()}">2</span>
+            <span th:text="${g.storeName()}">SM Megamall</span>
+            <span th:text="${g.promoCountText()}">3 promos</span>
+            <span><span class="badge" th:classappend="${g.severityClass()}" th:text="${g.severityLabel()}">Critical</span></span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Promo ID</th><th>Memo Number</th><th>Start Date</th><th>End Date</th>
+                <th>Enterprise</th><th>Local</th><th>Severity</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${g.promos()}">
+                <td th:text="${p.promoId()}">73294</td>
+                <td th:text="${p.memoNumber()}">SURP-0001-26</td>
+                <td th:text="${p.startDate()}">10-14-26</td>
+                <td th:text="${p.endDate()}">10-16-26</td>
+                <td><span class="badge" th:classappend="${p.enterpriseClass()}" th:text="${p.enterpriseLabel()}">Active</span></td>
+                <td><span class="badge" th:classappend="${p.localClass()}" th:text="${p.localLabel()}">Missing</span></td>
+                <td><span class="badge" th:classappend="${p.severityClass()}" th:text="${p.severityLabel()}">Critical</span></td>
             </tr>
             </tbody>
         </table>
@@ -167,7 +254,7 @@
 </div>
 
 <script>
-    // Open or close every promo row
+    // Open or close every promo/store row
     function setAll(open) {
       document.querySelectorAll('details.promo').forEach(function (d) { d.open = open; });
     }

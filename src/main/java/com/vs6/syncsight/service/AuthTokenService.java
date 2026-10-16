@@ -13,6 +13,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class AuthTokenService {
@@ -21,6 +23,7 @@ public class AuthTokenService {
     private final String tokenPath;
     private final String username;
     private final String password;
+    private final Duration timeout;
 
     // The key rack: one wristband per address (safe for many workers at once)
     private final Map<String, CachedToken> tokens = new ConcurrentHashMap<>();
@@ -31,11 +34,13 @@ public class AuthTokenService {
             WebClient webClient,
             @Value("${vs6-enterprise.api.auth.token}") String tokenPath,
             @Value("${vs6-enterprise.api.auth.username}") String username,
-            @Value("${vs6-enterprise.api.auth.password}") String password) {
+            @Value("${vs6-enterprise.api.auth.password}") String password,
+            @Value("${vs6-enterprise.api.timeout-seconds:60}") int timeoutSeconds) {
         this.webClient = webClient;
         this.tokenPath = tokenPath;
         this.username = username;
         this.password = password;
+        this.timeout = Duration.ofSeconds(timeoutSeconds);
     }
 
     // "Give me a good wristband for THIS address."
@@ -67,6 +72,9 @@ public class AuthTokenService {
                     .bodyValue(new TokenRequest(username, password))
                     .retrieve()
                     .bodyToMono(TokenResponse.class)
+                    .timeout(timeout)
+                    .onErrorMap(TimeoutException.class, e -> new ConnectionFailedException(
+                            "Login at [" + baseUrl + "] timed out after " + timeout.toSeconds() + " seconds", e))
                     .block();
 
             if (response == null || response.accessToken() == null) {

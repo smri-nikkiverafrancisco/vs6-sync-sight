@@ -15,6 +15,7 @@ vs6-enterprise:
       token: /auth/token
       username: "admin"
       password: "password.VS6.1234"
+    timeout-seconds: 60
   sync:
     threads: 6
 

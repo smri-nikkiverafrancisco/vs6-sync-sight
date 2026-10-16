@@ -5,7 +5,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Service
 public class AnomalyDetector {
@@ -37,6 +40,35 @@ public class AnomalyDetector {
         // CRITICAL promos first (the sort keeps the original order inside each group)
         result.sort(Comparator.comparing(PromoAnomaly::severity));
         return result;
+    }
+
+    // Flip the list: from "promos with their stores" to "stores with their promos"
+    public List<StoreAnomalyGroup> groupByStore(List<PromoAnomaly> anomalies) {
+        Map<Integer, List<PromoStoreAnomaly>> byStore = new TreeMap<>();   // sorted by store ID
+        Map<Integer, String> names = new HashMap<>();
+
+        for (PromoAnomaly promoAnomaly : anomalies) {
+            for (StoreAnomaly storeAnomaly : promoAnomaly.stores()) {
+                int storeId = storeAnomaly.store().storeId();
+                names.putIfAbsent(storeId, storeAnomaly.store().storeName());
+                byStore.computeIfAbsent(storeId, k -> new ArrayList<>())
+                        .add(new PromoStoreAnomaly(promoAnomaly.promo(), storeAnomaly));
+            }
+        }
+
+        List<StoreAnomalyGroup> groups = new ArrayList<>();
+        for (Map.Entry<Integer, List<PromoStoreAnomaly>> e : byStore.entrySet()) {
+            List<PromoStoreAnomaly> promos = e.getValue();
+            // Inside a store: CRITICAL first, then by promo ID
+            promos.sort(Comparator
+                    .comparing((PromoStoreAnomaly p) -> p.anomaly().severity())
+                    .thenComparingInt(p -> p.promo().promoId()));
+            groups.add(new StoreAnomalyGroup(e.getKey(), names.get(e.getKey()), promos));
+        }
+
+        // CRITICAL stores first, then by store ID (the TreeMap already ordered them by ID)
+        groups.sort(Comparator.comparing(StoreAnomalyGroup::severity));
+        return groups;
     }
 
     // Look at ONE status (Enterprise or Local) of ONE store and note any problem

@@ -14,8 +14,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Controller
 public class StartingPromotionsController {
@@ -38,25 +43,36 @@ public class StartingPromotionsController {
         return "redirect:/starting-promotions";
     }
 
-    // The Refresh button: start the refresh, then come back to the same tab
+    // The Refresh button: start the refresh, then come back to the same tab and view
     @PostMapping("/starting-promotions/refresh")
-    public String refresh(@RequestParam(defaultValue = "all") String tab) {
+    public String refresh(@RequestParam(defaultValue = "all") String tab,
+                          @RequestParam(defaultValue = "promo") String view) {
         syncService.startRefresh();
-        return "redirect:/starting-promotions?tab=" + tab;
+        String safeTab = "anomalies".equals(tab) ? "anomalies" : "all";
+        String safeView = "store".equals(view) ? "store" : "promo";
+        return "redirect:/starting-promotions?tab=" + safeTab + "&view=" + safeView;
     }
 
     @GetMapping("/starting-promotions")
-    public String page(@RequestParam(defaultValue = "all") String tab, Model model) {
+    public String page(@RequestParam(defaultValue = "all") String tab,
+                       @RequestParam(defaultValue = "promo") String view,
+                       Model model) {
         boolean anomaliesTab = "anomalies".equals(tab);
 
         Instant refreshed = syncService.getLastRefreshed();
         RefreshStatus status = syncService.getStatus();
 
         List<StartingPromotionStatus> report = syncService.getStartingReport();
-        List<PromoView> promos = report.stream().map(this::toView).toList();
 
+        // "All" tab, both views
+        List<PromoView> promos = report.stream().map(this::toView).toList();
+        List<StoreGroupView> allStoreGroups = toAllStoreGroups(report);
+
+        // "Anomalies" tab, both views
         List<PromoAnomaly> anomalies = anomalyDetector.detect(report);
         List<AnomalyPromoView> anomalyViews = anomalies.stream().map(this::toAnomalyView).toList();
+        List<AnomalyStoreGroupView> anomalyStoreGroups = anomalyDetector.groupByStore(anomalies).stream()
+                .map(this::toGroupView).toList();
         long criticalCount = anomalies.stream().filter(a -> a.severity() == Severity.CRITICAL).count();
         long warningCount = anomalies.size() - criticalCount;
 
@@ -73,12 +89,15 @@ public class StartingPromotionsController {
                 + (status.total() > 0 ? " (" + status.done() + "/" + status.total() + " stores)" : "");
 
         model.addAttribute("tab", anomaliesTab ? "anomalies" : "all");
+        model.addAttribute("view", "store".equals(view) ? "store" : "promo");
         model.addAttribute("today", LocalDate.now().format(HEADER_DATE));
         model.addAttribute("retrievedTime",
                 refreshed == null ? "--:--:--" : TIME.format(refreshed.atZone(ZoneId.systemDefault())));
         model.addAttribute("promoCount", promos.size());
         model.addAttribute("promos", promos);
+        model.addAttribute("allStoreGroups", allStoreGroups);
         model.addAttribute("anomalyPromos", anomalyViews);
+        model.addAttribute("anomalyStoreGroups", anomalyStoreGroups);
         model.addAttribute("criticalCount", criticalCount);
         model.addAttribute("warningCount", warningCount);
         model.addAttribute("nothingToShow", anomaliesTab ? anomalyViews.isEmpty() : promos.isEmpty());
@@ -89,7 +108,7 @@ public class StartingPromotionsController {
         return "starting-promotions";
     }
 
-    // ---------- "All" tab ----------
+    // ---------- "All" tab, view "By Promo" ----------
 
     private PromoView toView(StartingPromotionStatus status) {
         StartingPromotion p = status.promo();
@@ -104,7 +123,37 @@ public class StartingPromotionsController {
                 row.local().label(), statusClass(row.local()));
     }
 
-    // ---------- "Anomalies" tab ----------
+    // ---------- "All" tab, view "By Store" ----------
+
+    // Flip the report: from "promos with their stores" to "stores with their promos"
+    private List<StoreGroupView> toAllStoreGroups(List<StartingPromotionStatus> report) {
+        Map<Integer, List<StorePromoRowView>> byStore = new TreeMap<>();   // sorted by store ID
+        Map<Integer, String> names = new HashMap<>();
+
+        for (StartingPromotionStatus entry : report) {
+            StartingPromotion p = entry.promo();
+            for (StoreStatusRow row : entry.stores()) {
+                names.putIfAbsent(row.storeId(), row.storeName());
+                byStore.computeIfAbsent(row.storeId(), k -> new ArrayList<>())
+                        .add(new StorePromoRowView(p.promoId(), p.memoNumber(),
+                                p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE),
+                                row.enterprise().label(), statusClass(row.enterprise()),
+                                row.local().label(), statusClass(row.local())));
+            }
+        }
+
+        List<StoreGroupView> groups = new ArrayList<>();
+        for (Map.Entry<Integer, List<StorePromoRowView>> e : byStore.entrySet()) {
+            List<StorePromoRowView> rows = e.getValue();
+            rows.sort(Comparator.comparingInt(StorePromoRowView::promoId));   // by promo ID
+            int n = rows.size();
+            groups.add(new StoreGroupView(e.getKey(), names.get(e.getKey()),
+                    n + (n == 1 ? " promo" : " promos"), rows));
+        }
+        return groups;
+    }
+
+    // ---------- "Anomalies" tab, view "By Promo" ----------
 
     private AnomalyPromoView toAnomalyView(PromoAnomaly a) {
         StartingPromotion p = a.promo();
@@ -120,7 +169,26 @@ public class StartingPromotionsController {
         return new AnomalyStoreView(row.storeId(), row.storeName(),
                 row.enterprise().label(), statusClass(row.enterprise()),
                 row.local().label(), statusClass(row.local()),
-                severityLabel(s.severity()), severityClass(s.severity()), s.reasonText());
+                severityLabel(s.severity()), severityClass(s.severity()));
+    }
+
+    // ---------- "Anomalies" tab, view "By Store" ----------
+
+    private AnomalyStoreGroupView toGroupView(StoreAnomalyGroup g) {
+        List<AnomalyPromoRowView> rows = g.promos().stream().map(x -> {
+            StartingPromotion p = x.promo();
+            StoreStatusRow row = x.anomaly().store();
+            return new AnomalyPromoRowView(p.promoId(), p.memoNumber(),
+                    p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE),
+                    row.enterprise().label(), statusClass(row.enterprise()),
+                    row.local().label(), statusClass(row.local()),
+                    severityLabel(x.anomaly().severity()), severityClass(x.anomaly().severity()));
+        }).toList();
+
+        int n = g.promos().size();
+        return new AnomalyStoreGroupView(g.storeId(), g.storeName(),
+                n + (n == 1 ? " promo" : " promos"),
+                severityLabel(g.severity()), severityClass(g.severity()), rows);
     }
 
     // ---------- helpers ----------
@@ -137,6 +205,8 @@ public class StartingPromotionsController {
         return "sev-" + severity.name().toLowerCase();
     }
 
+    // ---------- shapes handed to the page ----------
+
     public record PromoView(int promoId, String memoNumber, int storeCount,
                             String startDate, String endDate, String duration,
                             List<StoreView> stores) {}
@@ -144,6 +214,14 @@ public class StartingPromotionsController {
     public record StoreView(int storeId, String storeName,
                             String enterpriseLabel, String enterpriseClass,
                             String localLabel, String localClass) {}
+
+    public record StoreGroupView(int storeId, String storeName, String promoCountText,
+                                 List<StorePromoRowView> promos) {}
+
+    public record StorePromoRowView(int promoId, String memoNumber,
+                                    String startDate, String endDate,
+                                    String enterpriseLabel, String enterpriseClass,
+                                    String localLabel, String localClass) {}
 
     public record AnomalyPromoView(int promoId, String memoNumber, String storeCountText,
                                    String startDate, String endDate, String duration,
@@ -153,6 +231,15 @@ public class StartingPromotionsController {
     public record AnomalyStoreView(int storeId, String storeName,
                                    String enterpriseLabel, String enterpriseClass,
                                    String localLabel, String localClass,
-                                   String severityLabel, String severityClass,
-                                   String reason) {}
+                                   String severityLabel, String severityClass) {}
+
+    public record AnomalyStoreGroupView(int storeId, String storeName, String promoCountText,
+                                        String severityLabel, String severityClass,
+                                        List<AnomalyPromoRowView> promos) {}
+
+    public record AnomalyPromoRowView(int promoId, String memoNumber,
+                                      String startDate, String endDate,
+                                      String enterpriseLabel, String enterpriseClass,
+                                      String localLabel, String localClass,
+                                      String severityLabel, String severityClass) {}
 }
