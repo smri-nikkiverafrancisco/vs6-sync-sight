@@ -1,4 +1,6 @@
-package com.vs6.syncsight.model;
+package com.vs6.syncsight.promotions.shared.anomaly;
+
+import com.vs6.syncsight.model.StartingPromotion;
 
 import java.util.List;
 

@@ -1,9 +1,9 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.shared.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.vs6.syncsight.exception.ApiResponseException;
-import com.vs6.syncsight.exception.ConnectionFailedException;
+import com.vs6.syncsight.shared.exception.ApiResponseException;
+import com.vs6.syncsight.shared.exception.ConnectionFailedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;

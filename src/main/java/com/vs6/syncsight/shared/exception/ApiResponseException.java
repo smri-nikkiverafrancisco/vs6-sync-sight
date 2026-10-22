@@ -1,4 +1,4 @@
-package com.vs6.syncsight.exception;
+package com.vs6.syncsight.shared.exception;
 
 public class ApiResponseException extends IllegalStateException {
     public ApiResponseException(String message) {

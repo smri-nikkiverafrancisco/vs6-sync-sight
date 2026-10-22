@@ -1,6 +1,5 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.shared.store;
 
-import com.vs6.syncsight.model.Store;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 

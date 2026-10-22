@@ -1,8 +1,17 @@
 package com.vs6.syncsight.service;
 
-import com.vs6.syncsight.exception.ApiResponseException;
-import com.vs6.syncsight.exception.ConnectionFailedException;
+import com.vs6.syncsight.promotions.shared.api.StorePromotion;
+import com.vs6.syncsight.promotions.shared.api.StorePromotionService;
+import com.vs6.syncsight.promotions.shared.snapshot.PromotionSnapshotStore;
+import com.vs6.syncsight.promotions.shared.status.PromoStatus;
+import com.vs6.syncsight.shared.exception.ApiResponseException;
+import com.vs6.syncsight.shared.exception.ConnectionFailedException;
 import com.vs6.syncsight.model.*;
+import com.vs6.syncsight.shared.auth.AuthTokenService;
+import com.vs6.syncsight.shared.source.FetchResult;
+import com.vs6.syncsight.shared.source.Source;
+import com.vs6.syncsight.shared.store.Store;
+import com.vs6.syncsight.shared.store.StoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package com.vs6.syncsight.model;
+package com.vs6.syncsight.shared.store;
 
 public record Store(int storeId, String storeName, String localIp) {
 

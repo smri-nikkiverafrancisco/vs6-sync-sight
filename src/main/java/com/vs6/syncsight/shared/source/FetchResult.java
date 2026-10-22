@@ -1,4 +1,6 @@
-package com.vs6.syncsight.model;
+package com.vs6.syncsight.shared.source;
+
+import com.vs6.syncsight.promotions.shared.api.StorePromotion;
 
 import java.time.Instant;
 import java.util.List;

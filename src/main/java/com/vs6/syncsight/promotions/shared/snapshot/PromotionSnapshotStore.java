@@ -1,7 +1,7 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.promotions.shared.snapshot;
 
-import com.vs6.syncsight.model.FetchResult;
-import com.vs6.syncsight.model.Source;
+import com.vs6.syncsight.shared.source.FetchResult;
+import com.vs6.syncsight.shared.source.Source;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;

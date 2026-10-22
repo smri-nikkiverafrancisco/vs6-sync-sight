@@ -1,4 +1,4 @@
-package com.vs6.syncsight.config;
+package com.vs6.syncsight.shared.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

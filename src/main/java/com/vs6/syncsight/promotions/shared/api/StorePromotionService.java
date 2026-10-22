@@ -1,11 +1,7 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.promotions.shared.api;
 
-import com.vs6.syncsight.exception.ApiResponseException;
-import com.vs6.syncsight.exception.ConnectionFailedException;
-import com.vs6.syncsight.model.FindByFilterRequest;
-import com.vs6.syncsight.model.FindByFilterResponse;
-import com.vs6.syncsight.model.StorePromotion;
-import com.vs6.syncsight.model.StorePromotionFilter;
+import com.vs6.syncsight.shared.exception.ApiResponseException;
+import com.vs6.syncsight.shared.exception.ConnectionFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +38,7 @@ public class StorePromotionService {
                     .uri(baseUrl + FIND_BY_FILTER)
                     .headers(h -> h.setBearerAuth(accessToken))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(new FindByFilterRequest(0, 10000, new StorePromotionFilter(storeId)))
+                    .bodyValue(new FindByFilterRequest(0, 15000, new StorePromotionFilter(storeId)))
                     .retrieve()
                     .bodyToMono(FindByFilterResponse.class)
                     .timeout(timeout)                                    // hang up if it takes too long

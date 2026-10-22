@@ -1,4 +1,4 @@
-package com.vs6.syncsight.model;
+package com.vs6.syncsight.promotions.shared.status;
 
 public enum PromoStatus {
     CONNECTION_ERROR("Connection Error"),

@@ -1,4 +1,4 @@
-package com.vs6.syncsight.model;
+package com.vs6.syncsight.promotions.shared.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;

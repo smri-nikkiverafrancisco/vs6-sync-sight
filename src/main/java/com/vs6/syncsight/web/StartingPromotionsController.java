@@ -1,7 +1,8 @@
 package com.vs6.syncsight.web;
 
 import com.vs6.syncsight.model.*;
-import com.vs6.syncsight.service.AnomalyDetector;
+import com.vs6.syncsight.promotions.shared.anomaly.*;
+import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 import com.vs6.syncsight.service.PromotionSyncService;
 import com.vs6.syncsight.service.PromotionSyncService.RefreshStatus;
 import org.springframework.stereotype.Controller;

@@ -1,6 +1,7 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.promotions.shared.anomaly;
 
 import com.vs6.syncsight.model.*;
+import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
