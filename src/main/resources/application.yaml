@@ -2,19 +2,19 @@ spring:
   application:
     name: sync-sight
   datasource:
-    url: jdbc:sqlserver://HOPROSYSACIDB1;encrypt=true;trustServerCertificate=true;databaseName=Promo
-    username: "ProMoSysAdmin"
-    password: "p@ssw0rd1"
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   thymeleaf:
     cache: false
 
 vs6-enterprise:
   api:
-    base-url: https://visualstore.visualstore.smretailinc.com/vs
+    base-url: ${VS6_URL}
     auth:
       token: /auth/token
-      username: "admin"
-      password: "password.VS6.1234"
+      username: ${VS6_USERNAME}
+      password: ${VS6_PASSWORD}
     timeout-seconds: 60
   sync:
     threads: 6
