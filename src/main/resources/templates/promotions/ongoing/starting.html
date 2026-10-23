@@ -86,17 +86,17 @@
     <span>Group by</span>
     <div class="switch">
         <a th:classappend="${view == 'promo'} ? 'active'"
-           th:href="@{/starting-promotions(tab=${tab},view='promo')}">By Promo</a>
+           th:href="@{/promotions/ongoing/starting(tab=${tab},view='promo')}">By Promo</a>
         <a th:classappend="${view == 'store'} ? 'active'"
-           th:href="@{/starting-promotions(tab=${tab},view='store')}">By Store</a>
+           th:href="@{/promotions/ongoing/starting(tab=${tab},view='store')}">By Store</a>
     </div>
 </div>
 
 <nav class="tabs">
     <a class="tab" th:classappend="${tab == 'all'} ? 'active'"
-       th:href="@{/starting-promotions(tab='all',view=${view})}">All</a>
+       th:href="@{/promotions/ongoing/starting(tab='all',view=${view})}">All</a>
     <a class="tab" th:classappend="${tab == 'anomalies'} ? 'active'"
-       th:href="@{/starting-promotions(tab='anomalies',view=${view})}">
+       th:href="@{/promotions/ongoing/starting(tab='anomalies',view=${view})}">
         Anomalies
         <span class="count crit" th:if="${criticalCount > 0}" th:text="${criticalCount}">0</span>
         <span class="count warn" th:if="${warningCount > 0}" th:text="${warningCount}">0</span>
@@ -106,7 +106,7 @@
 <div class="actions">
     <button type="button" onclick="setAll(true)">Expand All</button>
     <button type="button" onclick="setAll(false)">Collapse All</button>
-    <form method="post" action="/starting-promotions/refresh" style="margin-left:auto">
+    <form method="post" action="/promotions/ongoing/starting/refresh" style="margin-left:auto">
         <input type="hidden" name="tab" th:value="${tab}">
         <input type="hidden" name="view" th:value="${view}">
         <button type="submit" th:disabled="${refreshing}"

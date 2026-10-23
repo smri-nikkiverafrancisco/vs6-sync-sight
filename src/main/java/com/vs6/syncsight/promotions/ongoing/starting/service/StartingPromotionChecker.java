@@ -1,6 +1,8 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.promotions.ongoing.starting.service;
 
-import com.vs6.syncsight.model.*;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.shared.api.StorePromotion;
 import com.vs6.syncsight.promotions.shared.snapshot.PromotionSnapshotStore;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;

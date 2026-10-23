@@ -2,7 +2,7 @@ package com.vs6.syncsight;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.vs6.syncsight.service.PromotionSyncService;
+import com.vs6.syncsight.promotions.ongoing.starting.service.PromotionSyncService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

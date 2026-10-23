@@ -1,10 +1,12 @@
-package com.vs6.syncsight.web;
+package com.vs6.syncsight.promotions.ongoing.starting.web;
 
-import com.vs6.syncsight.model.*;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.shared.anomaly.*;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
-import com.vs6.syncsight.service.PromotionSyncService;
-import com.vs6.syncsight.service.PromotionSyncService.RefreshStatus;
+import com.vs6.syncsight.promotions.ongoing.starting.service.PromotionSyncService;
+import com.vs6.syncsight.promotions.ongoing.starting.service.PromotionSyncService.RefreshStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,20 +43,20 @@ public class StartingPromotionsController {
 
     @GetMapping("/")
     public String home() {
-        return "redirect:/starting-promotions";
+        return "redirect:/promotions/ongoing/starting";
     }
 
     // The Refresh button: start the refresh, then come back to the same tab and view
-    @PostMapping("/starting-promotions/refresh")
+    @PostMapping("/promotions/ongoing/starting/refresh")
     public String refresh(@RequestParam(defaultValue = "all") String tab,
                           @RequestParam(defaultValue = "promo") String view) {
         syncService.startRefresh();
         String safeTab = "anomalies".equals(tab) ? "anomalies" : "all";
         String safeView = "store".equals(view) ? "store" : "promo";
-        return "redirect:/starting-promotions?tab=" + safeTab + "&view=" + safeView;
+        return "redirect:/promotions/ongoing/starting?tab=" + safeTab + "&view=" + safeView;
     }
 
-    @GetMapping("/starting-promotions")
+    @GetMapping("/promotions/ongoing/starting")
     public String page(@RequestParam(defaultValue = "all") String tab,
                        @RequestParam(defaultValue = "promo") String view,
                        Model model) {
@@ -106,7 +108,7 @@ public class StartingPromotionsController {
         model.addAttribute("refreshing", status.running());
         model.addAttribute("refreshText", refreshText);
         model.addAttribute("refreshError", status.lastError());
-        return "starting-promotions";
+        return "promotions/ongoing/starting";
     }
 
     // ---------- "All" tab, view "By Promo" ----------

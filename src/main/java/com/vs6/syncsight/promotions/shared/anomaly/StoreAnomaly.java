@@ -1,6 +1,6 @@
 package com.vs6.syncsight.promotions.shared.anomaly;
 
-import com.vs6.syncsight.model.StoreStatusRow;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,6 +1,8 @@
 package com.vs6.syncsight.promotions.shared.anomaly;
 
-import com.vs6.syncsight.model.*;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 import org.springframework.stereotype.Service;
 

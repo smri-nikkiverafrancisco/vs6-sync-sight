@@ -1,6 +1,6 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.promotions.ongoing.starting.service;
 
-import com.vs6.syncsight.model.StartingPromotion;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 

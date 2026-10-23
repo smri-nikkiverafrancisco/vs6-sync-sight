@@ -1,12 +1,13 @@
-package com.vs6.syncsight.service;
+package com.vs6.syncsight.promotions.ongoing.starting.service;
 
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
+import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
 import com.vs6.syncsight.promotions.shared.api.StorePromotion;
 import com.vs6.syncsight.promotions.shared.api.StorePromotionService;
 import com.vs6.syncsight.promotions.shared.snapshot.PromotionSnapshotStore;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 import com.vs6.syncsight.shared.exception.ApiResponseException;
 import com.vs6.syncsight.shared.exception.ConnectionFailedException;
-import com.vs6.syncsight.model.*;
 import com.vs6.syncsight.shared.auth.AuthTokenService;
 import com.vs6.syncsight.shared.source.FetchResult;
 import com.vs6.syncsight.shared.source.Source;

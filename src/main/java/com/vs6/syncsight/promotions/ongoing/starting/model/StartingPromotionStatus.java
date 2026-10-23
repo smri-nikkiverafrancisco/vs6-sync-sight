@@ -1,4 +1,4 @@
-package com.vs6.syncsight.model;
+package com.vs6.syncsight.promotions.ongoing.starting.model;
 
 import java.util.List;
 
