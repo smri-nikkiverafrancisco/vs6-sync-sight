@@ -3,10 +3,9 @@ package com.vs6.syncsight.promotions.ongoing.starting.web;
 import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
 import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
 import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
+import com.vs6.syncsight.promotions.ongoing.starting.service.*;
 import com.vs6.syncsight.promotions.shared.anomaly.*;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
-import com.vs6.syncsight.promotions.ongoing.starting.service.PromotionSyncService;
-import com.vs6.syncsight.promotions.ongoing.starting.service.PromotionSyncService.RefreshStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -63,7 +62,7 @@ public class StartingPromotionsController {
         boolean anomaliesTab = "anomalies".equals(tab);
 
         Instant refreshed = syncService.getLastRefreshed();
-        RefreshStatus status = syncService.getStatus();
+        PromotionSyncService.RefreshStatus status = syncService.getStatus();
 
         List<StartingPromotionStatus> report = syncService.getStartingReport();
 
