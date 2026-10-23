@@ -1,6 +1,6 @@
 package com.vs6.syncsight.promotions.ongoing.starting.service;
 
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
+import com.vs6.syncsight.promotions.shared.model.Promotion;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +17,7 @@ public class StartingPromotionService {
     }
 
     // "Which promos start today, and for which stores?"
-    public List<StartingPromotion> getStartingToday() {
+    public List<Promotion> getStartingToday() {
         return jdbcTemplate.query(
                 """
                 WITH StartingPromotions AS (
@@ -76,7 +76,7 @@ public class StartingPromotionService {
                             .filter(s -> !s.isEmpty())
                             .map(Integer::parseInt)
                             .toList();
-                    return new StartingPromotion(
+                    return new Promotion(
                             rs.getInt("promo_id"),
                             rs.getString("memo_number"),
                             rs.getDate("start_date").toLocalDate(),

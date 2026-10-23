@@ -1,7 +1,8 @@
 package com.vs6.syncsight.promotions.ongoing.starting.service;
 
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
+import com.vs6.syncsight.promotions.shared.check.PromotionChecker;
+import com.vs6.syncsight.promotions.shared.model.Promotion;
+import com.vs6.syncsight.promotions.shared.model.PromotionCheck;
 import com.vs6.syncsight.promotions.shared.snapshot.PromotionSnapshotLoader;
 import com.vs6.syncsight.promotions.shared.snapshot.RefreshProgress;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
@@ -31,7 +32,7 @@ public class PromotionSyncService {
 
     private final StartingPromotionService startingPromotionService;
     private final PromotionSnapshotLoader snapshotLoader;
-    private final StartingPromotionChecker checker;
+    private final PromotionChecker checker;
 
     // Progress board (read by the page)
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -39,13 +40,13 @@ public class PromotionSyncService {
     private volatile String lastError;
 
     // What the page shows
-    private volatile List<StartingPromotionStatus> startingReport = List.of();
+    private volatile List<PromotionCheck> startingReport = List.of();
     private volatile Instant lastRefreshed;
 
     public PromotionSyncService(
             StartingPromotionService startingPromotionService,
             PromotionSnapshotLoader snapshotLoader,
-            StartingPromotionChecker checker) {
+            PromotionChecker checker) {
         this.startingPromotionService = startingPromotionService;
         this.snapshotLoader = snapshotLoader;
         this.checker = checker;
@@ -82,13 +83,13 @@ public class PromotionSyncService {
         // 3. Promotions starting today, from the database
         progress.setStage("Reading starting promotions");
         log.info("Step 3: Reading promotions starting today...");
-        List<StartingPromotion> starting = startingPromotionService.getStartingToday();
+        List<Promotion> starting = startingPromotionService.getStartingToday();
         log.info("{} promos starting today", starting.size());
 
         // 4. Check each starting promo's status in the album
         progress.setStage("Checking statuses");
         log.info("Step 4: Checking starting promotions...");
-        List<StartingPromotionStatus> report = checker.check(starting, stores);
+        List<PromotionCheck> report = checker.check(starting, stores);
 
         Map<PromoStatus, Long> counts = report.stream()
                 .flatMap(r -> r.stores().stream())
@@ -111,7 +112,7 @@ public class PromotionSyncService {
                 progress.getDone(), progress.getTotal(), lastError);
     }
 
-    public List<StartingPromotionStatus> getStartingReport() { return startingReport; }
+    public List<PromotionCheck> getStartingReport() { return startingReport; }
 
     public Instant getLastRefreshed() { return lastRefreshed; }
 }

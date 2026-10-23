@@ -1,8 +1,8 @@
 package com.vs6.syncsight.promotions.shared.anomaly;
 
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
-import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
+import com.vs6.syncsight.promotions.shared.model.Promotion;
+import com.vs6.syncsight.promotions.shared.model.PromotionCheck;
+import com.vs6.syncsight.promotions.shared.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +17,11 @@ import java.util.TreeMap;
 public class AnomalyDetector {
 
     // Go through the whole report and keep only the promos/stores with problems
-    public List<PromoAnomaly> detect(List<StartingPromotionStatus> report) {
+    public List<PromoAnomaly> detect(List<PromotionCheck> report) {
         List<PromoAnomaly> result = new ArrayList<>();
 
-        for (StartingPromotionStatus entry : report) {
-            StartingPromotion promo = entry.promo();
+        for (PromotionCheck entry : report) {
+            Promotion promo = entry.promo();
             // Dates in the database make sense when ActiveDateFrom <= ActiveDateTo
             boolean datesOk = !promo.endDate().isBefore(promo.startDate());
 

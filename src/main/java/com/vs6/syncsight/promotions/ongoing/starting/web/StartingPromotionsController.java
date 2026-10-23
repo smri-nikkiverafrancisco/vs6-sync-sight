@@ -1,8 +1,8 @@
 package com.vs6.syncsight.promotions.ongoing.starting.web;
 
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
-import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
+import com.vs6.syncsight.promotions.shared.model.Promotion;
+import com.vs6.syncsight.promotions.shared.model.PromotionCheck;
+import com.vs6.syncsight.promotions.shared.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.ongoing.starting.service.*;
 import com.vs6.syncsight.promotions.shared.anomaly.*;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
@@ -64,7 +64,7 @@ public class StartingPromotionsController {
         Instant refreshed = syncService.getLastRefreshed();
         PromotionSyncService.RefreshStatus status = syncService.getStatus();
 
-        List<StartingPromotionStatus> report = syncService.getStartingReport();
+        List<PromotionCheck> report = syncService.getStartingReport();
 
         // "All" tab, both views
         List<PromoView> promos = report.stream().map(this::toView).toList();
@@ -112,8 +112,8 @@ public class StartingPromotionsController {
 
     // ---------- "All" tab, view "By Promo" ----------
 
-    private PromoView toView(StartingPromotionStatus status) {
-        StartingPromotion p = status.promo();
+    private PromoView toView(PromotionCheck status) {
+        Promotion p = status.promo();
         List<StoreView> stores = status.stores().stream().map(this::toStoreView).toList();
         return new PromoView(p.promoId(), p.memoNumber(), p.storeCount(),
                 p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE), p.durationText(), stores);
@@ -128,12 +128,12 @@ public class StartingPromotionsController {
     // ---------- "All" tab, view "By Store" ----------
 
     // Flip the report: from "promos with their stores" to "stores with their promos"
-    private List<StoreGroupView> toAllStoreGroups(List<StartingPromotionStatus> report) {
+    private List<StoreGroupView> toAllStoreGroups(List<PromotionCheck> report) {
         Map<Integer, List<StorePromoRowView>> byStore = new TreeMap<>();   // sorted by store ID
         Map<Integer, String> names = new HashMap<>();
 
-        for (StartingPromotionStatus entry : report) {
-            StartingPromotion p = entry.promo();
+        for (PromotionCheck entry : report) {
+            Promotion p = entry.promo();
             for (StoreStatusRow row : entry.stores()) {
                 names.putIfAbsent(row.storeId(), row.storeName());
                 byStore.computeIfAbsent(row.storeId(), k -> new ArrayList<>())
@@ -158,7 +158,7 @@ public class StartingPromotionsController {
     // ---------- "Anomalies" tab, view "By Promo" ----------
 
     private AnomalyPromoView toAnomalyView(PromoAnomaly a) {
-        StartingPromotion p = a.promo();
+        Promotion p = a.promo();
         List<AnomalyStoreView> rows = a.stores().stream().map(this::toAnomalyStoreView).toList();
         return new AnomalyPromoView(p.promoId(), p.memoNumber(),
                 a.stores().size() + " of " + p.storeCount(),
@@ -178,7 +178,7 @@ public class StartingPromotionsController {
 
     private AnomalyStoreGroupView toGroupView(StoreAnomalyGroup g) {
         List<AnomalyPromoRowView> rows = g.promos().stream().map(x -> {
-            StartingPromotion p = x.promo();
+            Promotion p = x.promo();
             StoreStatusRow row = x.anomaly().store();
             return new AnomalyPromoRowView(p.promoId(), p.memoNumber(),
                     p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE),

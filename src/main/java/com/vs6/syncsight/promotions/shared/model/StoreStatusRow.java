@@ -1,4 +1,4 @@
-package com.vs6.syncsight.promotions.ongoing.starting.model;
+package com.vs6.syncsight.promotions.shared.model;
 
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 

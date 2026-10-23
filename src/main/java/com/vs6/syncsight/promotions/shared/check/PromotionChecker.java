@@ -1,8 +1,8 @@
-package com.vs6.syncsight.promotions.ongoing.starting.service;
+package com.vs6.syncsight.promotions.shared.check;
 
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotion;
-import com.vs6.syncsight.promotions.ongoing.starting.model.StartingPromotionStatus;
-import com.vs6.syncsight.promotions.ongoing.starting.model.StoreStatusRow;
+import com.vs6.syncsight.promotions.shared.model.Promotion;
+import com.vs6.syncsight.promotions.shared.model.PromotionCheck;
+import com.vs6.syncsight.promotions.shared.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.shared.api.StorePromotion;
 import com.vs6.syncsight.promotions.shared.snapshot.PromotionSnapshotStore;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
@@ -17,19 +17,19 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-public class StartingPromotionChecker {
+public class PromotionChecker {
 
     private final PromotionSnapshotStore snapshotStore;
 
-    public StartingPromotionChecker(PromotionSnapshotStore snapshotStore) {
+    public PromotionChecker(PromotionSnapshotStore snapshotStore) {
         this.snapshotStore = snapshotStore;
     }
 
     // For each starting promo, look up each of its stores in the album
-    public List<StartingPromotionStatus> check(List<StartingPromotion> starting, Map<Integer, Store> stores) {
-        List<StartingPromotionStatus> report = new ArrayList<>();
+    public List<PromotionCheck> check(List<Promotion> starting, Map<Integer, Store> stores) {
+        List<PromotionCheck> report = new ArrayList<>();
 
-        for (StartingPromotion promo : starting) {
+        for (Promotion promo : starting) {
             List<StoreStatusRow> rows = new ArrayList<>();
             for (int storeId : promo.storeIds()) {
                 Store store = stores.get(storeId);
@@ -40,7 +40,7 @@ public class StartingPromotionChecker {
                         resolve(Source.ENTERPRISE, storeId, promo.promoId()),
                         resolve(Source.LOCAL, storeId, promo.promoId())));
             }
-            report.add(new StartingPromotionStatus(promo, rows));
+            report.add(new PromotionCheck(promo, rows));
         }
         return report;
     }

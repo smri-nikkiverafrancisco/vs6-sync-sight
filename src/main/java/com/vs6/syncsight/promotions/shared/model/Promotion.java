@@ -1,9 +1,9 @@
-package com.vs6.syncsight.promotions.ongoing.starting.model;
+package com.vs6.syncsight.promotions.shared.model;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public record StartingPromotion(
+public record Promotion(
         int promoId,
         String memoNumber,
         LocalDate startDate,
