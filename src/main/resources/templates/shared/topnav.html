@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Top menu (shared fragments)</title>
+
+    <!-- Styles for the top menu. A page puts this inside its <head>. -->
+    <style th:fragment="styles">
+        .topnav { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px;
+                  padding-bottom:12px; margin-bottom:16px; border-bottom:1px solid var(--line); }
+        .topnav .brand { font-weight:700; letter-spacing:.5px; color:var(--fg); text-decoration:none; }
+        .topnav .module { color:var(--muted); }
+        .topnav .module b { color:var(--fg); }
+        .topnav .menu { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin-left:8px; }
+        .topnav .menu-group { display:inline-flex; align-items:center; gap:8px; }
+        .topnav .menu-label { color:var(--muted); }
+
+        .pills { display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+        .pills > * { padding:5px 14px; text-decoration:none; color:var(--muted); }
+        .pills > * + * { border-left:1px solid var(--line); }
+        .pills a:hover { color:var(--fg); }
+        .pills a.active { background:var(--head); color:var(--fg); font-weight:600; }
+        .pills .disabled { opacity:.5; cursor:not-allowed; }
+        .pills .soon { margin-left:4px; font-size:11px; }
+    </style>
+</head>
+<body>
+
+<!-- The top menu for the Promotions pages. A page puts this at the top of its <body>.
+     The active item is found by comparing the page's basePath (set by its controller). -->
+<header class="topnav" th:fragment="nav">
+    <a class="brand" th:href="@{/}">SYNC SIGHT</a>
+    <span class="module">/ <b>Promotions</b></span>
+
+    <nav class="menu">
+        <div class="menu-group">
+            <span class="menu-label">Ongoing</span>
+            <div class="pills">
+                <a th:href="@{/promotions/ongoing/all}"
+                   th:classappend="${basePath == '/promotions/ongoing/all'} ? 'active'">All</a>
+                <a th:href="@{/promotions/ongoing/starting}"
+                   th:classappend="${basePath == '/promotions/ongoing/starting'} ? 'active'">Starting</a>
+            </div>
+        </div>
+
+        <!-- Not built yet: shown greyed out. When a page exists, change the <span> into an <a th:href="@{...}"> like the ones above. -->
+        <div class="pills">
+            <span class="disabled" title="Coming soon">Upcoming<span class="soon">soon</span></span>
+        </div>
+        <div class="pills">
+            <span class="disabled" title="Coming soon">Ended<span class="soon">soon</span></span>
+        </div>
+    </nav>
+</header>
+
+</body>
+</html>

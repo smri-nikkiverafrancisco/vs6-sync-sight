@@ -1,6 +1,6 @@
 package com.vs6.syncsight;
 
-import com.vs6.syncsight.promotions.ongoing.starting.service.StartingPromotionSyncService;
+import com.vs6.syncsight.promotions.shared.sync.PromotionRefreshCoordinator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -18,8 +18,9 @@ public class SyncSightApplication {
 		SpringApplication.run(SyncSightApplication.class, args);
 	}
 
+	// On startup: one refresh for ALL pages (Starting, All Ongoing, ...)
 	@Bean
-	CommandLineRunner refreshOnStart(StartingPromotionSyncService syncService) {
-		return args -> syncService.startRefresh();
+	CommandLineRunner refreshOnStart(PromotionRefreshCoordinator coordinator) {
+		return args -> coordinator.startRefresh();
 	}
 }

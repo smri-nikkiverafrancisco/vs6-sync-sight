@@ -38,6 +38,8 @@
                  border-radius:6px; cursor:pointer; }
         button:hover { border-color:var(--muted); }
         button:disabled { opacity:.5; cursor:not-allowed; }
+        .refreshbar { display:flex; align-items:center; gap:10px; margin-top:6px; }
+        .refreshbar form { margin:0; }
 
         .row { display:grid; grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr; gap:8px; padding:8px 10px; align-items:center; }
         .row.sev { grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr .9fr; }
@@ -71,15 +73,30 @@
 
         .empty { padding:24px; color:var(--muted); border:1px dashed var(--line); border-radius:6px; }
     </style>
+    <!-- top menu styles -->
+    <th:block th:replace="~{shared/topnav :: styles}"></th:block>
 </head>
 <body>
+
+<!-- top menu -->
+<div th:replace="~{shared/topnav :: nav}"></div>
 
 <h1 th:text="${#strings.toUpperCase(pageTitle)}">PROMOTIONS</h1>
 <div class="meta">
     <div th:text="${today}">Wednesday, October 14, 2026</div>
     <div>Retrieved Time: <b th:text="${retrievedTime}">00:00:00</b></div>
     <div>No. of Promos: <b th:text="${promoCount}">0</b></div>
+    <div class="refreshbar">
+        <form method="post" th:action="@{|${basePath}/refresh|}">
+            <input type="hidden" name="tab" th:value="${tab}">
+            <input type="hidden" name="view" th:value="${view}">
+            <button type="submit" th:disabled="${refreshing}"
+                    th:text="${refreshing} ? 'Refreshing...' : 'Refresh'">Refresh</button>
+        </form>
+        <span th:if="${refreshing}" th:text="${refreshText}"></span>
+    </div>
 </div>
+<br><br>
 
 <!-- Group by: applies to BOTH tabs -->
 <div class="viewbar">
@@ -106,15 +123,8 @@
 <div class="actions">
     <button type="button" onclick="setAll(true)">Expand All</button>
     <button type="button" onclick="setAll(false)">Collapse All</button>
-    <form method="post" th:action="@{|${basePath}/refresh|}" style="margin-left:auto">
-        <input type="hidden" name="tab" th:value="${tab}">
-        <input type="hidden" name="view" th:value="${view}">
-        <button type="submit" th:disabled="${refreshing}"
-                th:text="${refreshing} ? 'Refreshing...' : 'Refresh'">Refresh</button>
-    </form>
 </div>
 
-<div class="meta" th:if="${refreshing}" th:text="${refreshText}"></div>
 <div class="meta" th:if="${refreshError != null}" th:text="'Last refresh failed: ' + ${refreshError}"></div>
 
 <div class="empty" th:if="${nothingToShow}" th:text="${emptyMessage}"></div>

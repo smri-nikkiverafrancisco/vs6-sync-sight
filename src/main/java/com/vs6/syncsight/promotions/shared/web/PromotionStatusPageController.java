@@ -6,6 +6,7 @@ import com.vs6.syncsight.promotions.shared.model.PromotionCheck;
 import com.vs6.syncsight.promotions.shared.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 import com.vs6.syncsight.promotions.shared.sync.AbstractPromotionSyncService;
+import com.vs6.syncsight.promotions.shared.sync.PromotionRefreshCoordinator;
 import com.vs6.syncsight.promotions.shared.sync.RefreshStatus;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,8 +27,8 @@ import java.util.TreeMap;
 
 /**
  * The page logic that is the same for every Promotions submodule (Starting, All Ongoing, ...).
- * A submodule's controller only gives it: its sync service, its page title, its URL path
- * and the message to show when there are no promotions.
+ * A submodule's controller only gives it: the refresh coordinator, its own sync service (its report),
+ * its page title, its URL path and the message to show when there are no promotions.
  * The URL path itself is set on the submodule's controller with @RequestMapping.
  */
 public abstract class PromotionStatusPageController {
@@ -37,17 +38,20 @@ public abstract class PromotionStatusPageController {
     private static final DateTimeFormatter ROW_DATE = DateTimeFormatter.ofPattern("MM-dd-yy");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    private final PromotionRefreshCoordinator coordinator;
     private final AbstractPromotionSyncService syncService;
     private final AnomalyDetector anomalyDetector;
     private final String pageTitle;
     private final String basePath;
     private final String emptyPromosMessage;
 
-    protected PromotionStatusPageController(AbstractPromotionSyncService syncService,
+    protected PromotionStatusPageController(PromotionRefreshCoordinator coordinator,
+                                            AbstractPromotionSyncService syncService,
                                             AnomalyDetector anomalyDetector,
                                             String pageTitle,
                                             String basePath,
                                             String emptyPromosMessage) {
+        this.coordinator = coordinator;
         this.syncService = syncService;
         this.anomalyDetector = anomalyDetector;
         this.pageTitle = pageTitle;
@@ -59,7 +63,7 @@ public abstract class PromotionStatusPageController {
     @PostMapping("/refresh")
     public String refresh(@RequestParam(defaultValue = "all") String tab,
                           @RequestParam(defaultValue = "promo") String view) {
-        syncService.startRefresh();
+        coordinator.startRefresh();
         String safeTab = "anomalies".equals(tab) ? "anomalies" : "all";
         String safeView = "store".equals(view) ? "store" : "promo";
         return "redirect:" + basePath + "?tab=" + safeTab + "&view=" + safeView;
@@ -72,7 +76,7 @@ public abstract class PromotionStatusPageController {
         boolean anomaliesTab = "anomalies".equals(tab);
 
         Instant refreshed = syncService.getLastRefreshed();
-        RefreshStatus status = syncService.getStatus();
+        RefreshStatus status = coordinator.getStatus();
 
         List<PromotionCheck> report = syncService.getReport();
 
