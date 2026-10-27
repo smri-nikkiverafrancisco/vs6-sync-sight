@@ -1,6 +1,6 @@
 package com.vs6.syncsight;
 
-import com.vs6.syncsight.promotions.ongoing.starting.service.PromotionSyncService;
+import com.vs6.syncsight.promotions.ongoing.starting.service.StartingPromotionSyncService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -19,7 +19,7 @@ public class SyncSightApplication {
 	}
 
 	@Bean
-	CommandLineRunner refreshOnStart(PromotionSyncService syncService) {
+	CommandLineRunner refreshOnStart(StartingPromotionSyncService syncService) {
 		return args -> syncService.startRefresh();
 	}
 }

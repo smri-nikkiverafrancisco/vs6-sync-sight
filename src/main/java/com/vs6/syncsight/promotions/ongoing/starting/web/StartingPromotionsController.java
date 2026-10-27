@@ -1,11 +1,12 @@
 package com.vs6.syncsight.promotions.ongoing.starting.web;
 
+import com.vs6.syncsight.promotions.ongoing.starting.service.StartingPromotionSyncService;
+import com.vs6.syncsight.promotions.shared.anomaly.*;
 import com.vs6.syncsight.promotions.shared.model.Promotion;
 import com.vs6.syncsight.promotions.shared.model.PromotionCheck;
 import com.vs6.syncsight.promotions.shared.model.StoreStatusRow;
-import com.vs6.syncsight.promotions.ongoing.starting.service.*;
-import com.vs6.syncsight.promotions.shared.anomaly.*;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
+import com.vs6.syncsight.promotions.shared.sync.RefreshStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,10 +33,10 @@ public class StartingPromotionsController {
     private static final DateTimeFormatter ROW_DATE = DateTimeFormatter.ofPattern("MM-dd-yy");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    private final PromotionSyncService syncService;
+    private final StartingPromotionSyncService syncService;
     private final AnomalyDetector anomalyDetector;
 
-    public StartingPromotionsController(PromotionSyncService syncService, AnomalyDetector anomalyDetector) {
+    public StartingPromotionsController(StartingPromotionSyncService syncService, AnomalyDetector anomalyDetector) {
         this.syncService = syncService;
         this.anomalyDetector = anomalyDetector;
     }
@@ -62,9 +63,9 @@ public class StartingPromotionsController {
         boolean anomaliesTab = "anomalies".equals(tab);
 
         Instant refreshed = syncService.getLastRefreshed();
-        PromotionSyncService.RefreshStatus status = syncService.getStatus();
+        RefreshStatus status = syncService.getStatus();
 
-        List<PromotionCheck> report = syncService.getStartingReport();
+        List<PromotionCheck> report = syncService.getReport();
 
         // "All" tab, both views
         List<PromoView> promos = report.stream().map(this::toView).toList();

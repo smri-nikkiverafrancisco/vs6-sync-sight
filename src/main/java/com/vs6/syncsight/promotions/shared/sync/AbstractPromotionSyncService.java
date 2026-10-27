@@ -1,4 +1,4 @@
-package com.vs6.syncsight.promotions.ongoing.starting.service;
+package com.vs6.syncsight.promotions.shared.sync;
 
 import com.vs6.syncsight.promotions.shared.check.PromotionChecker;
 import com.vs6.syncsight.promotions.shared.model.Promotion;
@@ -9,7 +9,6 @@ import com.vs6.syncsight.promotions.shared.status.PromoStatus;
 import com.vs6.syncsight.shared.store.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.EnumMap;
@@ -20,17 +19,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The Starting Promotions half of a refresh.
- * The shared work (reading stores, fetching Enterprise and Local) is done by PromotionSnapshotLoader;
- * this class adds what is only for Starting: today's starting promos, the status check,
- * and the report the page shows.
+ * The refresh logic that is the same for every Promotions submodule
+ * (Starting, All Ongoing, Upcoming, Ended):
+ * run in the background, load the snapshot, check the promotions, keep the report for the page.
+ *
+ * A submodule only says WHICH promotions to check (its own SQL) by extending this class
+ * and filling in loadPromotions() and description().
  */
-@Service
-public class PromotionSyncService {
+public abstract class AbstractPromotionSyncService {
 
-    private static final Logger log = LoggerFactory.getLogger(PromotionSyncService.class);
+    private static final Logger log = LoggerFactory.getLogger(AbstractPromotionSyncService.class);
 
-    private final StartingPromotionService startingPromotionService;
     private final PromotionSnapshotLoader snapshotLoader;
     private final PromotionChecker checker;
 
@@ -40,17 +39,19 @@ public class PromotionSyncService {
     private volatile String lastError;
 
     // What the page shows
-    private volatile List<PromotionCheck> startingReport = List.of();
+    private volatile List<PromotionCheck> report = List.of();
     private volatile Instant lastRefreshed;
 
-    public PromotionSyncService(
-            StartingPromotionService startingPromotionService,
-            PromotionSnapshotLoader snapshotLoader,
-            PromotionChecker checker) {
-        this.startingPromotionService = startingPromotionService;
+    protected AbstractPromotionSyncService(PromotionSnapshotLoader snapshotLoader, PromotionChecker checker) {
         this.snapshotLoader = snapshotLoader;
         this.checker = checker;
     }
+
+    // THE ONLY THING A SUBMODULE MUST PROVIDE: which promotions to check (its own SQL)
+    protected abstract List<Promotion> loadPromotions();
+
+    // Short wording for the log lines, for example "starting today" or "ongoing today"
+    protected abstract String description();
 
     // BACKGROUND: "Start a refresh and come back to me right away."
     // Returns false if one is already running.
@@ -80,18 +81,18 @@ public class PromotionSyncService {
         // Steps 1-2 (shared): read the stores and fetch Enterprise + Local into the album
         Map<Integer, Store> stores = snapshotLoader.loadAll(progress);
 
-        // 3. Promotions starting today, from the database
-        progress.setStage("Reading starting promotions");
-        log.info("Step 3: Reading promotions starting today...");
-        List<Promotion> starting = startingPromotionService.getStartingToday();
-        log.info("{} promos starting today", starting.size());
+        // 3. This submodule's promotions, from the database
+        progress.setStage("Reading promotions");
+        log.info("Step 3: Reading promotions {}...", description());
+        List<Promotion> promotions = loadPromotions();
+        log.info("{} promos {}", promotions.size(), description());
 
-        // 4. Check each starting promo's status in the album
+        // 4. Check each promo's status in the album
         progress.setStage("Checking statuses");
-        log.info("Step 4: Checking starting promotions...");
-        List<PromotionCheck> report = checker.check(starting, stores);
+        log.info("Step 4: Checking promotions {}...", description());
+        List<PromotionCheck> checked = checker.check(promotions, stores);
 
-        Map<PromoStatus, Long> counts = report.stream()
+        Map<PromoStatus, Long> counts = checked.stream()
                 .flatMap(r -> r.stores().stream())
                 .flatMap(s -> Stream.of(s.enterprise(), s.local()))
                 .collect(Collectors.groupingBy(s -> s,
@@ -99,20 +100,17 @@ public class PromotionSyncService {
         log.info("Status counts (Enterprise + Local): {}", counts);
 
         // Swap in the new results all at once, so the page never sees a half-finished report
-        this.startingReport = report;
+        this.report = checked;
         this.lastRefreshed = Instant.now();
         log.info("Refresh done.");
     }
-
-    // What the page needs to show progress
-    public record RefreshStatus(boolean running, String stage, int done, int total, String lastError) {}
 
     public RefreshStatus getStatus() {
         return new RefreshStatus(running.get(), progress.getStage(),
                 progress.getDone(), progress.getTotal(), lastError);
     }
 
-    public List<PromotionCheck> getStartingReport() { return startingReport; }
+    public List<PromotionCheck> getReport() { return report; }
 
     public Instant getLastRefreshed() { return lastRefreshed; }
 }
