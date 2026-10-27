@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="5" th:if="${refreshing}">
+    <title th:text="${pageTitle}">Promotions</title>
+    <style>
+        :root {
+          --bg:#ffffff; --fg:#1f2328; --muted:#6b7280; --line:#d8dee4; --head:#f3f4f6;
+        }
+        @media (prefers-color-scheme: dark) {
+          :root { --bg:#0d1117; --fg:#e6edf3; --muted:#9198a1; --line:#30363d; --head:#161b22; }
+        }
+        body { margin:0; padding:24px; background:var(--bg); color:var(--fg);
+               font-family:system-ui, Segoe UI, Arial, sans-serif; font-size:14px; }
+        h1 { margin:0 0 4px; font-size:22px; letter-spacing:.5px; }
+        .meta { color:var(--muted); line-height:1.6; margin-bottom:16px; }
+        .meta b { color:var(--fg); }
+
+        .viewbar { display:flex; align-items:center; gap:10px; margin-bottom:12px; color:var(--muted); }
+        .switch { display:inline-flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+        .switch a { padding:5px 14px; text-decoration:none; color:var(--muted); }
+        .switch a + a { border-left:1px solid var(--line); }
+        .switch a.active { background:var(--head); color:var(--fg); font-weight:600; }
+
+        .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:12px; }
+        .tab { padding:8px 16px; border:1px solid transparent; border-bottom:none; border-radius:6px 6px 0 0;
+               text-decoration:none; color:var(--muted); }
+        .tab.active { color:var(--fg); font-weight:600; border-color:var(--line); background:var(--head); }
+        .count { display:inline-block; min-width:18px; padding:0 6px; margin-left:6px; border-radius:9px;
+                 color:#fff; font-size:12px; text-align:center; }
+        .count.crit { background:#cf222e; }
+        .count.warn { background:#bf8700; }
+
+        .actions { margin-bottom:12px; display:flex; gap:8px; }
+        button { padding:6px 12px; border:1px solid var(--line); background:var(--head); color:var(--fg);
+                 border-radius:6px; cursor:pointer; }
+        button:hover { border-color:var(--muted); }
+        button:disabled { opacity:.5; cursor:not-allowed; }
+
+        .row { display:grid; grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr; gap:8px; padding:8px 10px; align-items:center; }
+        .row.sev { grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr .9fr; }
+        .row.bystore { grid-template-columns:1fr 2.4fr 1.2fr .9fr; }
+        .row.bystore-all { grid-template-columns:1fr 2.4fr 2.1fr; }
+        .row.head { background:var(--head); font-weight:600; border:1px solid var(--line); border-radius:6px 6px 0 0; }
+        details.promo { border:1px solid var(--line); border-top:none; }
+        details.promo[open] { background:var(--head); }
+        summary { list-style:none; cursor:pointer; }
+        summary::-webkit-details-marker { display:none; }
+        summary span:first-child::before { content:"▸ "; color:var(--muted); }
+        details[open] summary span:first-child::before { content:"▾ "; }
+
+        table.stores { margin:0 0 10px 28px; border-collapse:collapse; background:var(--bg); }
+        table.stores th, table.stores td { padding:5px 14px; border:1px solid var(--line); text-align:left; }
+        table.stores th { background:var(--head); }
+
+        .badge { display:inline-block; padding:2px 8px; border-radius:10px; color:#fff; font-size:12px;
+                 background:var(--c, #6b7280); }
+        .status-active { --c:#1a7f37; }
+        .status-new { --c:#0969da; }
+        .status-inactive { --c:#6b7280; }
+        .status-cancelled { --c:#cf222e; }
+        .status-missing { --c:#bf8700; }
+        .status-api-error { --c:#d4620a; }
+        .status-connection-error { --c:#a40e26; }
+        .status-no-local-site { --c:#8c959f; }
+        .status-unknown { --c:#8250df; }
+        .sev-critical { --c:#cf222e; }
+        .sev-warning { --c:#bf8700; }
+
+        .empty { padding:24px; color:var(--muted); border:1px dashed var(--line); border-radius:6px; }
+    </style>
+</head>
+<body>
+
+<h1 th:text="${#strings.toUpperCase(pageTitle)}">PROMOTIONS</h1>
+<div class="meta">
+    <div th:text="${today}">Wednesday, October 14, 2026</div>
+    <div>Retrieved Time: <b th:text="${retrievedTime}">00:00:00</b></div>
+    <div>No. of Promos: <b th:text="${promoCount}">0</b></div>
+</div>
+
+<!-- Group by: applies to BOTH tabs -->
+<div class="viewbar">
+    <span>Group by</span>
+    <div class="switch">
+        <a th:classappend="${view == 'promo'} ? 'active'"
+           th:href="@{${basePath}(tab=${tab},view='promo')}">By Promo</a>
+        <a th:classappend="${view == 'store'} ? 'active'"
+           th:href="@{${basePath}(tab=${tab},view='store')}">By Store</a>
+    </div>
+</div>
+
+<nav class="tabs">
+    <a class="tab" th:classappend="${tab == 'all'} ? 'active'"
+       th:href="@{${basePath}(tab='all',view=${view})}">All</a>
+    <a class="tab" th:classappend="${tab == 'anomalies'} ? 'active'"
+       th:href="@{${basePath}(tab='anomalies',view=${view})}">
+        Anomalies
+        <span class="count crit" th:if="${criticalCount > 0}" th:text="${criticalCount}">0</span>
+        <span class="count warn" th:if="${warningCount > 0}" th:text="${warningCount}">0</span>
+    </a>
+</nav>
+
+<div class="actions">
+    <button type="button" onclick="setAll(true)">Expand All</button>
+    <button type="button" onclick="setAll(false)">Collapse All</button>
+    <form method="post" th:action="@{|${basePath}/refresh|}" style="margin-left:auto">
+        <input type="hidden" name="tab" th:value="${tab}">
+        <input type="hidden" name="view" th:value="${view}">
+        <button type="submit" th:disabled="${refreshing}"
+                th:text="${refreshing} ? 'Refreshing...' : 'Refresh'">Refresh</button>
+    </form>
+</div>
+
+<div class="meta" th:if="${refreshing}" th:text="${refreshText}"></div>
+<div class="meta" th:if="${refreshError != null}" th:text="'Last refresh failed: ' + ${refreshError}"></div>
+
+<div class="empty" th:if="${nothingToShow}" th:text="${emptyMessage}"></div>
+
+<!-- ================= ALL TAB: BY PROMO ================= -->
+<div th:if="${tab == 'all' and view == 'promo' and not nothingToShow}">
+    <div class="row head">
+        <span>Promo ID</span><span>Memo Number</span><span>Store Count</span>
+        <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
+    </div>
+
+    <details class="promo" th:each="p : ${promos}">
+        <summary class="row">
+            <span th:text="${p.promoId()}">73294</span>
+            <span th:text="${p.memoNumber()}">SURP-0001-26</span>
+            <span th:text="${p.storeCount()}">2</span>
+            <span th:text="${p.startDate()}">10-14-26</span>
+            <span th:text="${p.endDate()}">10-16-26</span>
+            <span th:text="${p.duration()}">3 days</span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${p.stores()}">
+                <td th:text="${s.storeId()}">1</td>
+                <td th:text="${s.storeName()}">SM Megamall</td>
+                <td><span class="badge" th:classappend="${s.enterpriseClass()}" th:text="${s.enterpriseLabel()}">Active</span></td>
+                <td><span class="badge" th:classappend="${s.localClass()}" th:text="${s.localLabel()}">Active</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</div>
+
+<!-- ================= ALL TAB: BY STORE ================= -->
+<div th:if="${tab == 'all' and view == 'store' and not nothingToShow}">
+    <div class="row head bystore-all">
+        <span>Store ID</span><span>Store Name</span><span>Promos</span>
+    </div>
+
+    <details class="promo" th:each="g : ${allStoreGroups}">
+        <summary class="row bystore-all">
+            <span th:text="${g.storeId()}">2</span>
+            <span th:text="${g.storeName()}">SM Megamall</span>
+            <span th:text="${g.promoCountText()}">120 promos</span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Promo ID</th><th>Memo Number</th><th>Start Date</th><th>End Date</th>
+                <th>Enterprise</th><th>Local</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${g.promos()}">
+                <td th:text="${p.promoId()}">73294</td>
+                <td th:text="${p.memoNumber()}">SURP-0001-26</td>
+                <td th:text="${p.startDate()}">10-14-26</td>
+                <td th:text="${p.endDate()}">10-16-26</td>
+                <td><span class="badge" th:classappend="${p.enterpriseClass()}" th:text="${p.enterpriseLabel()}">Active</span></td>
+                <td><span class="badge" th:classappend="${p.localClass()}" th:text="${p.localLabel()}">Active</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</div>
+
+<!-- ================= ANOMALIES TAB: BY PROMO ================= -->
+<div th:if="${tab == 'anomalies' and view == 'promo' and not nothingToShow}">
+    <div class="row head sev">
+        <span>Promo ID</span><span>Memo Number</span><span>Stores</span>
+        <span>Start Date</span><span>End Date</span><span>Promo Duration</span><span>Severity</span>
+    </div>
+
+    <details class="promo" th:each="a : ${anomalyPromos}">
+        <summary class="row sev">
+            <span th:text="${a.promoId()}">73294</span>
+            <span th:text="${a.memoNumber()}">SURP-0001-26</span>
+            <span th:text="${a.storeCountText()}">2 of 5</span>
+            <span th:text="${a.startDate()}">10-14-26</span>
+            <span th:text="${a.endDate()}">10-16-26</span>
+            <span th:text="${a.duration()}">3 days</span>
+            <span><span class="badge" th:classappend="${a.severityClass()}" th:text="${a.severityLabel()}">Critical</span></span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th><th>Severity</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${a.stores()}">
+                <td th:text="${s.storeId()}">1</td>
+                <td th:text="${s.storeName()}">SM Megamall</td>
+                <td><span class="badge" th:classappend="${s.enterpriseClass()}" th:text="${s.enterpriseLabel()}">Active</span></td>
+                <td><span class="badge" th:classappend="${s.localClass()}" th:text="${s.localLabel()}">Missing</span></td>
+                <td><span class="badge" th:classappend="${s.severityClass()}" th:text="${s.severityLabel()}">Critical</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</div>
+
+<!-- ================= ANOMALIES TAB: BY STORE ================= -->
+<div th:if="${tab == 'anomalies' and view == 'store' and not nothingToShow}">
+    <div class="row head bystore">
+        <span>Store ID</span><span>Store Name</span><span>Anomalies</span><span>Severity</span>
+    </div>
+
+    <details class="promo" th:each="g : ${anomalyStoreGroups}">
+        <summary class="row bystore">
+            <span th:text="${g.storeId()}">2</span>
+            <span th:text="${g.storeName()}">SM Megamall</span>
+            <span th:text="${g.promoCountText()}">3 promos</span>
+            <span><span class="badge" th:classappend="${g.severityClass()}" th:text="${g.severityLabel()}">Critical</span></span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Promo ID</th><th>Memo Number</th><th>Start Date</th><th>End Date</th>
+                <th>Enterprise</th><th>Local</th><th>Severity</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${g.promos()}">
+                <td th:text="${p.promoId()}">73294</td>
+                <td th:text="${p.memoNumber()}">SURP-0001-26</td>
+                <td th:text="${p.startDate()}">10-14-26</td>
+                <td th:text="${p.endDate()}">10-16-26</td>
+                <td><span class="badge" th:classappend="${p.enterpriseClass()}" th:text="${p.enterpriseLabel()}">Active</span></td>
+                <td><span class="badge" th:classappend="${p.localClass()}" th:text="${p.localLabel()}">Missing</span></td>
+                <td><span class="badge" th:classappend="${p.severityClass()}" th:text="${p.severityLabel()}">Critical</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</div>
+
+<script>
+    // Open or close every promo/store row
+    function setAll(open) {
+      document.querySelectorAll('details.promo').forEach(function (d) { d.open = open; });
+    }
+</script>
+</body>
+</html>
