@@ -35,7 +35,8 @@ public class AllOngoingPromotionService {
                         ON p.XMLPromoId = pr.promoid
                     INNER JOIN promotypes pt
                         ON pr.promotypeid = pt.promotypeid AND LOWER(pt.TypeDesc) NOT LIKE '%no pos scanning%'
-                    WHERE CAST(GETDATE() AS DATE) BETWEEN CAST(p.ActiveDateFrom AS DATE) AND CAST(p.ActiveDateTO AS DATE)
+                    WHERE CAST(GETDATE() AS DATE) BETWEEN CAST(p.ActiveDateFrom AS DATE) AND CAST(p.ActiveDateTo AS DATE)
+                    AND CAST(p.ActiveDateTo AS DATE) >= CAST(p.ActiveDateFrom AS DATE)
                 )
                 SELECT
                     PromoID AS promo_id,

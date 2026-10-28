@@ -43,10 +43,12 @@
             </div>
         </div>
 
-        <!-- Not built yet: shown greyed out. When a page exists, change the <span> into an <a th:href="@{...}"> like the ones above. -->
         <div class="pills">
-            <span class="disabled" title="Coming soon">Upcoming<span class="soon">soon</span></span>
+            <a th:href="@{/promotions/upcoming}"
+               th:classappend="${basePath == '/promotions/upcoming'} ? 'active'">Upcoming</a>
         </div>
+
+        <!-- Not built yet: shown greyed out. When a page exists, change the <span> into an <a th:href="@{...}"> like the ones above. -->
         <div class="pills">
             <span class="disabled" title="Coming soon">Ended<span class="soon">soon</span></span>
         </div>

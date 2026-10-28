@@ -36,6 +36,7 @@ public class StartingPromotionService {
                     INNER JOIN promotypes pt
                          ON pr.PromoTypeId = pt.PromoTypeId AND LOWER(pt.TypeDesc) NOT LIKE '%no pos scanning%'
                     WHERE p.ActiveDateFrom = CAST(GETDATE() AS DATE)
+                    AND CAST(p.ActiveDateTo AS DATE) >= CAST(p.ActiveDateFrom AS DATE)
                 )
                 SELECT
                     PromoID AS promo_id,

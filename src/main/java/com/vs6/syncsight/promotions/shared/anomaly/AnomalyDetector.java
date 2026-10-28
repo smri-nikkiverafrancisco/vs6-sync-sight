@@ -4,6 +4,7 @@ import com.vs6.syncsight.promotions.shared.model.Promotion;
 import com.vs6.syncsight.promotions.shared.model.PromotionCheck;
 import com.vs6.syncsight.promotions.shared.model.StoreStatusRow;
 import com.vs6.syncsight.promotions.shared.status.PromoStatus;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,6 +14,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * The anomaly detector with the DEFAULT rules: a promo is expected to be ACTIVE in the stores.
+ * Used by Starting and All Ongoing.
+ *
+ * A submodule with different rules (for example Upcoming, where NEW is the good state)
+ * extends this class and overrides check(). @Primary makes this one the default when a
+ * controller just asks for "an AnomalyDetector".
+ */
+@Primary
 @Service
 public class AnomalyDetector {
 
@@ -74,8 +84,9 @@ public class AnomalyDetector {
         return groups;
     }
 
-    // Look at ONE status (Enterprise or Local) of ONE store and note any problem
-    private void check(String source, PromoStatus status, boolean datesOk, List<AnomalyIssue> issues) {
+    // THE RULES. Look at ONE status (Enterprise or Local) of ONE store and note any problem.
+    // A submodule with other rules overrides this method.
+    protected void check(String source, PromoStatus status, boolean datesOk, List<AnomalyIssue> issues) {
         switch (status) {
             case NO_LOCAL_SITE -> { }   // not a problem
 
