@@ -59,6 +59,11 @@ public abstract class PromotionStatusPageController {
         this.emptyPromosMessage = emptyPromosMessage;
     }
 
+    // A page that shows the "Days Left" column overrides this and returns true (only All Ongoing does)
+    protected boolean showDaysLeft() {
+        return false;
+    }
+
     // The Refresh button: start the refresh, then come back to the same tab and view
     @PostMapping("/refresh")
     public String refresh(@RequestParam(defaultValue = "all") String tab,
@@ -106,6 +111,7 @@ public abstract class PromotionStatusPageController {
 
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("basePath", basePath);
+        model.addAttribute("showDaysLeft", showDaysLeft());
         model.addAttribute("tab", anomaliesTab ? "anomalies" : "all");
         model.addAttribute("view", "store".equals(view) ? "store" : "promo");
         model.addAttribute("today", LocalDate.now().format(HEADER_DATE));
@@ -132,7 +138,8 @@ public abstract class PromotionStatusPageController {
         Promotion p = status.promo();
         List<StoreView> stores = status.stores().stream().map(this::toStoreView).toList();
         return new PromoView(p.promoId(), p.memoNumber(), p.storeCount(),
-                p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE), p.durationText(), stores);
+                p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE), p.durationText(),
+                p.daysLeftText(), stores);
     }
 
     private StoreView toStoreView(StoreStatusRow row) {
@@ -179,6 +186,7 @@ public abstract class PromotionStatusPageController {
         return new AnomalyPromoView(p.promoId(), p.memoNumber(),
                 a.stores().size() + " of " + p.storeCount(),
                 p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE), p.durationText(),
+                p.daysLeftText(),
                 severityLabel(a.severity()), severityClass(a.severity()), rows);
     }
 
@@ -226,7 +234,7 @@ public abstract class PromotionStatusPageController {
     // ---------- shapes handed to the page ----------
 
     public record PromoView(int promoId, String memoNumber, int storeCount,
-                            String startDate, String endDate, String duration,
+                            String startDate, String endDate, String duration, String daysLeft,
                             List<StoreView> stores) {}
 
     public record StoreView(int storeId, String storeName,
@@ -242,7 +250,7 @@ public abstract class PromotionStatusPageController {
                                     String localLabel, String localClass) {}
 
     public record AnomalyPromoView(int promoId, String memoNumber, String storeCountText,
-                                   String startDate, String endDate, String duration,
+                                   String startDate, String endDate, String duration, String daysLeft,
                                    String severityLabel, String severityClass,
                                    List<AnomalyStoreView> stores) {}
 

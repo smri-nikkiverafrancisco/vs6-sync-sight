@@ -16,7 +16,7 @@ public class AllOngoingPromotionService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    // "Which promos start today, and for which stores?"
+    // "Which promos are ongoing today, for which stores, and how many days are left?"
     public List<Promotion> getAllOngoing() {
         return jdbcTemplate.query(
                 """
@@ -27,7 +27,8 @@ public class AllOngoingPromotionService {
                         p.ActiveDateFrom,
                         p.ActiveDateTo,
                         ps.StoreID,
-                        DATEDIFF(day, p.ActiveDateFrom, p.ActiveDateTo) + 1 AS total_days
+                        DATEDIFF(day, p.ActiveDateFrom, p.ActiveDateTo) + 1 AS total_days,
+                        DATEDIFF(day, CAST(GETDATE() AS DATE), p.ActiveDateTo) AS days_left
                     FROM smvs_promotions p
                     INNER JOIN smvs_promotion_stores ps
                         ON p.PromoID = ps.PromoId
@@ -46,6 +47,7 @@ public class AllOngoingPromotionService {
                     COUNT(DISTINCT StoreID) AS store_count,
                     STRING_AGG(CAST(StoreID AS varchar(max)),',') WITHIN GROUP (ORDER BY StoreID) AS store_ids,
                     total_days AS promo_duration_days,
+                    days_left AS promo_remaining_days,
                     CONCAT_WS(', ',
                         CASE
                             WHEN total_days / 30 = 1 THEN '1 month'
@@ -59,16 +61,34 @@ public class AllOngoingPromotionService {
                             WHEN (total_days % 30) % 7 = 1 THEN '1 day'
                             WHEN (total_days % 30) % 7 > 1 THEN CONCAT((total_days % 30) % 7, ' days')
                         END
-                    ) AS promo_duration_aggregated
+                    ) AS promo_duration_aggregated,
+                    CONCAT_WS(', ',
+                        CASE
+                            WHEN days_left / 30 = 1 THEN '1 month'
+                            WHEN days_left / 30 > 1 THEN CONCAT(days_left / 30, ' months')
+                        END,
+                        CASE
+                            WHEN (days_left % 30) / 7 = 1 THEN '1 week'
+                            WHEN (days_left % 30) / 7 > 1 THEN CONCAT((days_left % 30) / 7, ' weeks')
+                        END,
+                        CASE
+                            WHEN (days_left % 30) % 7 = 1 THEN '1 day'
+                            WHEN (days_left % 30) % 7 > 1 THEN CONCAT((days_left % 30) % 7, ' days')
+                        END,
+                        CASE
+                            WHEN days_left = 0 THEN 'Due'
+                        END
+                    ) AS promo_days_left_aggregated
                 FROM OngoingPromotions
                 GROUP BY
                     PromoID,
                     MemoNumber,
                     ActiveDateFrom,
                     ActiveDateTo,
-                    total_days
+                    total_days,
+                    days_left
                 ORDER BY
-                    promo_duration_days ASC, store_count DESC, memo_number ASC
+                    days_left ASC, promo_duration_days ASC, store_count DESC, memo_number ASC
                 """,
                 (rs, rowNum) -> {
                     int days = rs.getInt("promo_duration_days");
@@ -85,7 +105,8 @@ public class AllOngoingPromotionService {
                             rs.getInt("store_count"),
                             storeIds,
                             days,
-                            days <= 0 ? "0 Day" : rs.getString("promo_duration_aggregated"));
+                            days <= 0 ? "0 Day" : rs.getString("promo_duration_aggregated"),
+                            rs.getString("promo_days_left_aggregated"));
                 });
     }
 }

@@ -45,6 +45,8 @@
         .row.sev { grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr .9fr; }
         .row.bystore { grid-template-columns:1fr 2.4fr 1.2fr .9fr; }
         .row.bystore-all { grid-template-columns:1fr 2.4fr 2.1fr; }
+        .row.dl { grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr 1.2fr; }
+        .row.sev.dl { grid-template-columns:1fr 1.4fr .8fr 1fr 1fr 1.4fr 1.2fr .9fr; }
         .row.head { background:var(--head); font-weight:600; border:1px solid var(--line); border-radius:6px 6px 0 0; }
         details.promo { border:1px solid var(--line); border-top:none; }
         details.promo[open] { background:var(--head); }
@@ -100,7 +102,7 @@
 
 <!-- Group by: applies to BOTH tabs -->
 <div class="viewbar">
-    <span>Group by</span>
+    <span>Group Results</span>
     <div class="switch">
         <a th:classappend="${view == 'promo'} ? 'active'"
            th:href="@{${basePath}(tab=${tab},view='promo')}">By Promo</a>
@@ -108,6 +110,7 @@
            th:href="@{${basePath}(tab=${tab},view='store')}">By Store</a>
     </div>
 </div>
+<br>
 
 <nav class="tabs">
     <a class="tab" th:classappend="${tab == 'all'} ? 'active'"
@@ -131,19 +134,21 @@
 
 <!-- ================= ALL TAB: BY PROMO ================= -->
 <div th:if="${tab == 'all' and view == 'promo' and not nothingToShow}">
-    <div class="row head">
+    <div class="row head" th:classappend="${showDaysLeft} ? 'dl'">
         <span>Promo ID</span><span>Memo Number</span><span>Store Count</span>
         <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
+        <span th:if="${showDaysLeft}">Days Left</span>
     </div>
 
     <details class="promo" th:each="p : ${promos}">
-        <summary class="row">
+        <summary class="row" th:classappend="${showDaysLeft} ? 'dl'">
             <span th:text="${p.promoId()}">73294</span>
             <span th:text="${p.memoNumber()}">SURP-0001-26</span>
             <span th:text="${p.storeCount()}">2</span>
             <span th:text="${p.startDate()}">10-14-26</span>
             <span th:text="${p.endDate()}">10-16-26</span>
             <span th:text="${p.duration()}">3 days</span>
+            <span th:if="${showDaysLeft}" th:text="${p.daysLeft()}">2 weeks</span>
         </summary>
 
         <table class="stores">
@@ -196,19 +201,21 @@
 
 <!-- ================= ANOMALIES TAB: BY PROMO ================= -->
 <div th:if="${tab == 'anomalies' and view == 'promo' and not nothingToShow}">
-    <div class="row head sev">
+    <div class="row head sev" th:classappend="${showDaysLeft} ? 'dl'">
         <span>Promo ID</span><span>Memo Number</span><span>Stores</span>
-        <span>Start Date</span><span>End Date</span><span>Promo Duration</span><span>Severity</span>
+        <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
+        <span th:if="${showDaysLeft}">Days Left</span><span>Severity</span>
     </div>
 
     <details class="promo" th:each="a : ${anomalyPromos}">
-        <summary class="row sev">
+        <summary class="row sev" th:classappend="${showDaysLeft} ? 'dl'">
             <span th:text="${a.promoId()}">73294</span>
             <span th:text="${a.memoNumber()}">SURP-0001-26</span>
             <span th:text="${a.storeCountText()}">2 of 5</span>
             <span th:text="${a.startDate()}">10-14-26</span>
             <span th:text="${a.endDate()}">10-16-26</span>
             <span th:text="${a.duration()}">3 days</span>
+            <span th:if="${showDaysLeft}" th:text="${a.daysLeft()}">2 weeks</span>
             <span><span class="badge" th:classappend="${a.severityClass()}" th:text="${a.severityLabel()}">Critical</span></span>
         </summary>
 

@@ -24,4 +24,10 @@ public class AllOngoingPromotionsController extends PromotionStatusPageControlle
                 "/promotions/ongoing/all",
                 "No ongoing promotions today.");
     }
+
+    // Only this page shows the "Days Left" column
+    @Override
+    protected boolean showDaysLeft() {
+        return true;
+    }
 }
