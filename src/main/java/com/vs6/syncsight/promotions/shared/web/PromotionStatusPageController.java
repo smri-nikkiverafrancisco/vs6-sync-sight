@@ -59,6 +59,11 @@ public abstract class PromotionStatusPageController {
         this.emptyPromosMessage = emptyPromosMessage;
     }
 
+    // The name of the first tab. A page can override this (Ended calls it "Recent").
+    protected String allTabLabel() {
+        return "All";
+    }
+
     // A page that shows the "Days Left" column overrides this and returns true (only All Ongoing does)
     protected boolean showDaysLeft() {
         return false;
@@ -112,6 +117,7 @@ public abstract class PromotionStatusPageController {
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("basePath", basePath);
         model.addAttribute("showDaysLeft", showDaysLeft());
+        model.addAttribute("allTabLabel", allTabLabel());
         model.addAttribute("tab", anomaliesTab ? "anomalies" : "all");
         model.addAttribute("view", "store".equals(view) ? "store" : "promo");
         model.addAttribute("today", LocalDate.now().format(HEADER_DATE));

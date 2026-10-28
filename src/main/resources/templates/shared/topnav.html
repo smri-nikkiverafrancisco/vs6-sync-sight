@@ -48,9 +48,14 @@
                th:classappend="${basePath == '/promotions/upcoming'} ? 'active'">Upcoming</a>
         </div>
 
+        <div class="pills">
+            <a th:href="@{/promotions/ended}"
+               th:classappend="${basePath == '/promotions/ended'} ? 'active'">Ended</a>
+        </div>
+
         <!-- Not built yet: shown greyed out. When a page exists, change the <span> into an <a th:href="@{...}"> like the ones above. -->
         <div class="pills">
-            <span class="disabled" title="Coming soon">Ended<span class="soon">soon</span></span>
+            <span class="disabled" title="Coming soon">Cancelled<span class="soon">soon</span></span>
         </div>
     </nav>
 </header>

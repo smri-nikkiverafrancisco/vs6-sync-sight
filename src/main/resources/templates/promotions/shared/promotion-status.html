@@ -114,7 +114,7 @@
 
 <nav class="tabs">
     <a class="tab" th:classappend="${tab == 'all'} ? 'active'"
-       th:href="@{${basePath}(tab='all',view=${view})}">All</a>
+       th:href="@{${basePath}(tab='all',view=${view})}" th:text="${allTabLabel}">All</a>
     <a class="tab" th:classappend="${tab == 'anomalies'} ? 'active'"
        th:href="@{${basePath}(tab='anomalies',view=${view})}">
         Anomalies
