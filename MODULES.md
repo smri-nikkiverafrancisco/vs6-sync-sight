@@ -39,7 +39,7 @@ promotions/                     MODULE 1
   ongoing/
     starting/                   1.1.2 (model/, service/, web/)
 
-resources/templates/promotions/ongoing/starting.html
+resources/templates/sync-sight/promotions/ongoing/starting.html
 ```
 
 ## Where does a new file go?
@@ -63,7 +63,7 @@ Start at the lowest level and move a file up only when a second user appears.
 
 1. Create its package under the right module (for example `promotions.upcoming`).
 2. Write its own SQL and checker. Reuse `PromotionSnapshotLoader.loadAll(progress)` for the fetching.
-3. Add its controller and template under `templates/promotions/...` with a matching URL path.
+3. Add its controller and template under `templates/sync-sight/promotions/...` with a matching URL path.
 4. Add a row to the Modules table above.
 
 ## Known to-do

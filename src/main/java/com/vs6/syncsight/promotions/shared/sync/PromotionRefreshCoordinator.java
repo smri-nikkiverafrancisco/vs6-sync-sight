@@ -31,6 +31,7 @@ public class PromotionRefreshCoordinator {
 
     // Progress board (read by the pages)
     private final AtomicBoolean running = new AtomicBoolean(false);
+    private final AtomicBoolean everStarted = new AtomicBoolean(false);   // NEW: has any refresh been started yet?
     private final RefreshProgress progress = new RefreshProgress();
     private volatile String lastError;
 
@@ -40,12 +41,22 @@ public class PromotionRefreshCoordinator {
         this.submodules = submodules;
     }
 
+    // NEW: called whenever a Promotions page is opened.
+    // Starts the very first refresh, and only that one. It never restarts by itself afterwards
+    // (even after an error): the Refresh button is the way to try again.
+    public void startIfNeverStarted() {
+        if (!everStarted.get()) {
+            startRefresh();
+        }
+    }
+
     // BACKGROUND: "Start a refresh and come back to me right away."
     // Returns false if one is already running.
     public boolean startRefresh() {
         if (!running.compareAndSet(false, true)) {
             return false;
         }
+        everStarted.set(true);                                             // NEW
         Thread worker = new Thread(() -> {
             try {
                 refresh();

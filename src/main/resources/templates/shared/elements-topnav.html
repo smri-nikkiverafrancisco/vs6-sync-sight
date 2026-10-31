@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Elements top menu (shared fragment)</title>
+</head>
+<body>
+
+<!-- The top menu for the Elements pages. The pill styles come from topnav.html (:: styles). -->
+<header class="topnav" th:fragment="nav">
+    <a class="brand" th:href="@{/sync-sight}">SYNC SIGHT</a>
+    <span class="module">/ <b>Elements</b></span>
+
+    <nav class="menu">
+        <div class="menu-group">
+            <span class="menu-label">Ongoing</span>
+            <div class="pills">
+                <span class="disabled" title="Coming soon">All<span class="soon">soon</span></span>
+                <a th:href="@{/sync-sight/elements/ongoing/starting}"
+                   th:classappend="${basePath == '/sync-sight/elements/ongoing/starting'} ? 'active'">Starting</a>
+            </div>
+        </div>
+
+        <div class="pills">
+            <span class="disabled" title="Coming soon">Upcoming<span class="soon">soon</span></span>
+        </div>
+    </nav>
+</header>
+
+</body>
+</html>

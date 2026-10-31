@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * the refresh coordinator, the All Ongoing report, the page title, the URL path and the empty-page message.
  */
 @Controller
-@RequestMapping("/promotions/ongoing/all")
+@RequestMapping("/sync-sight/promotions/ongoing/all")
 public class AllOngoingPromotionsController extends PromotionStatusPageController {
 
     public AllOngoingPromotionsController(PromotionRefreshCoordinator coordinator,
@@ -21,7 +21,7 @@ public class AllOngoingPromotionsController extends PromotionStatusPageControlle
                                           AnomalyDetector anomalyDetector) {
         super(coordinator, syncService, anomalyDetector,
                 "All Ongoing Promotions",
-                "/promotions/ongoing/all",
+                "/sync-sight/promotions/ongoing/all",
                 "No ongoing promotions today.");
     }
 

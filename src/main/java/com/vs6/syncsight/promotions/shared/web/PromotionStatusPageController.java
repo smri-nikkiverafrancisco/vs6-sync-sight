@@ -83,6 +83,7 @@ public abstract class PromotionStatusPageController {
     public String page(@RequestParam(defaultValue = "all") String tab,
                        @RequestParam(defaultValue = "promo") String view,
                        Model model) {
+        coordinator.startIfNeverStarted();
         boolean anomaliesTab = "anomalies".equals(tab);
 
         Instant refreshed = syncService.getLastRefreshed();

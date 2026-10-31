@@ -29,28 +29,28 @@
 <!-- The top menu for the Promotions pages. A page puts this at the top of its <body>.
      The active item is found by comparing the page's basePath (set by its controller). -->
 <header class="topnav" th:fragment="nav">
-    <a class="brand" th:href="@{/}">SYNC SIGHT</a>
+    <a class="brand" th:href="@{/sync-sight}">SYNC SIGHT</a>
     <span class="module">/ <b>Promotions</b></span>
 
     <nav class="menu">
         <div class="menu-group">
             <span class="menu-label">Ongoing</span>
             <div class="pills">
-                <a th:href="@{/promotions/ongoing/all}"
-                   th:classappend="${basePath == '/promotions/ongoing/all'} ? 'active'">All</a>
-                <a th:href="@{/promotions/ongoing/starting}"
-                   th:classappend="${basePath == '/promotions/ongoing/starting'} ? 'active'">Starting</a>
+                <a th:href="@{/sync-sight/promotions/ongoing/all}"
+                   th:classappend="${basePath == '/sync-sight/promotions/ongoing/all'} ? 'active'">All</a>
+                <a th:href="@{/sync-sight/promotions/ongoing/starting}"
+                   th:classappend="${basePath == '/sync-sight/promotions/ongoing/starting'} ? 'active'">Starting</a>
             </div>
         </div>
 
         <div class="pills">
-            <a th:href="@{/promotions/upcoming}"
-               th:classappend="${basePath == '/promotions/upcoming'} ? 'active'">Upcoming</a>
+            <a th:href="@{/sync-sight/promotions/upcoming}"
+               th:classappend="${basePath == '/sync-sight/promotions/upcoming'} ? 'active'">Upcoming</a>
         </div>
 
         <div class="pills">
-            <a th:href="@{/promotions/ended}"
-               th:classappend="${basePath == '/promotions/ended'} ? 'active'">Ended</a>
+            <a th:href="@{/sync-sight/promotions/ended}"
+               th:classappend="${basePath == '/sync-sight/promotions/ended'} ? 'active'">Ended</a>
         </div>
 
         <!-- Not built yet: shown greyed out. When a page exists, change the <span> into an <a th:href="@{...}"> like the ones above. -->

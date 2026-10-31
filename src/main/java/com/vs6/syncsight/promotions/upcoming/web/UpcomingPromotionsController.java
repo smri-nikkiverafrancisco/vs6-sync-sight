@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * the URL path and the empty-page message.
  */
 @Controller
-@RequestMapping("/promotions/upcoming")
+@RequestMapping("/sync-sight/promotions/upcoming")
 public class UpcomingPromotionsController extends PromotionStatusPageController {
 
     public UpcomingPromotionsController(PromotionRefreshCoordinator coordinator,
@@ -22,7 +22,7 @@ public class UpcomingPromotionsController extends PromotionStatusPageController 
                                         UpcomingAnomalyDetector anomalyDetector) {
         super(coordinator, syncService, anomalyDetector,
                 "Upcoming Promotions",
-                "/promotions/upcoming",
+                "/sync-sight/promotions/upcoming",
                 "No upcoming promotions.");
     }
 }

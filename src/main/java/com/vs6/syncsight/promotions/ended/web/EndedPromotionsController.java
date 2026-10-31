@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * the URL path and the empty-page message.
  */
 @Controller
-@RequestMapping("/promotions/ended")
+@RequestMapping("/sync-sight/promotions/ended")
 public class EndedPromotionsController extends PromotionStatusPageController {
 
     public EndedPromotionsController(PromotionRefreshCoordinator coordinator,
@@ -22,7 +22,7 @@ public class EndedPromotionsController extends PromotionStatusPageController {
                                      EndedAnomalyDetector anomalyDetector) {
         super(coordinator, syncService, anomalyDetector,
                 "Ended Promotions",
-                "/promotions/ended",
+                "/sync-sight/promotions/ended",
                 "No promotions ended in the last 30 days.");
     }
 
