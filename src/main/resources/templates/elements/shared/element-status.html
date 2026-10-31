@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="5" th:if="${refreshing}">
+    <meta http-equiv="refresh" content="5" th:if="${refreshing or promotionsRefreshing}">
     <title th:text="${pageTitle}">Elements</title>
     <style>
         :root {
@@ -33,6 +33,8 @@
         button { padding:6px 12px; border:1px solid var(--line); background:var(--head); color:var(--fg);
                  border-radius:6px; cursor:pointer; }
         button:hover { border-color:var(--muted); }
+        button:disabled { opacity:.5; cursor:not-allowed; }
+        .refreshbar form { margin:0; }
         .refreshbar { display:flex; align-items:center; gap:10px; margin-top:6px; }
 
         .row { display:grid; grid-template-columns:1fr 1.4fr 1fr .8fr 1fr 1fr 1.4fr; gap:8px; padding:8px 10px; align-items:center; }
@@ -80,7 +82,13 @@
     <div>No. of Promos: <b th:text="${promoCount}">0</b></div>
     <!-- The Refresh button comes later; for now only the loading progress is shown -->
     <div class="refreshbar">
+        <form method="post" th:action="@{|${basePath}/refresh|}">
+            <input type="hidden" name="view" th:value="${view}">
+            <button type="submit" th:disabled="${refreshing or promotionsRefreshing}"
+                    th:text="${refreshing} ? 'Refreshing...' : 'Refresh'">Refresh</button>
+        </form>
         <span th:if="${refreshing}" th:text="${refreshText}"></span>
+        <span th:if="${promotionsRefreshing and not refreshing}">Promotions are refreshing. Refresh is available when they finish.</span>
     </div>
 </div>
 <br><br>

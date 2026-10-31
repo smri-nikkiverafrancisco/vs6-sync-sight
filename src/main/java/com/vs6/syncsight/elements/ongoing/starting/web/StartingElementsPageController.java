@@ -8,11 +8,13 @@ import com.vs6.syncsight.elements.shared.model.ElementStatus;
 import com.vs6.syncsight.elements.shared.model.ElementStatusEvaluator;
 import com.vs6.syncsight.elements.shared.model.ElementStoreRow;
 import com.vs6.syncsight.promotions.shared.sync.RefreshStatus;
+import com.vs6.syncsight.promotions.shared.sync.PromotionRefreshCoordinator;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -41,9 +43,21 @@ public class StartingElementsPageController {
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final StartingElementsRefreshService service;
+    private final PromotionRefreshCoordinator promotionCoordinator;
 
-    public StartingElementsPageController(StartingElementsRefreshService service) {
+    public StartingElementsPageController(StartingElementsRefreshService service,
+                                          PromotionRefreshCoordinator promotionCoordinator) {
         this.service = service;
+        this.promotionCoordinator = promotionCoordinator;
+    }
+
+    // The Refresh button. Does nothing while a Promotions refresh is running.
+    @PostMapping("/refresh")
+    public String refresh(@RequestParam(defaultValue = "promo") String view) {
+        if (!promotionCoordinator.getStatus().running()) {
+            service.startRefresh();
+        }
+        return "redirect:" + BASE_PATH + "?view=" + ("store".equals(view) ? "store" : "promo");
     }
 
     @GetMapping
@@ -69,7 +83,7 @@ public class StartingElementsPageController {
         String refreshText = status.stage()
                 + (status.total() > 0 ? " (" + status.done() + "/" + status.total() + " stores)" : "");
 
-        model.addAttribute("pageTitle", "Starting Promotions");
+        model.addAttribute("pageTitle", "Starting Promotions Elements");
         model.addAttribute("basePath", BASE_PATH);
         model.addAttribute("view", "store".equals(view) ? "store" : "promo");
         model.addAttribute("today", LocalDate.now().format(HEADER_DATE));
@@ -81,6 +95,7 @@ public class StartingElementsPageController {
         model.addAttribute("nothingToShow", promos.isEmpty());
         model.addAttribute("emptyMessage", emptyMessage);
         model.addAttribute("refreshing", status.running());
+        model.addAttribute("promotionsRefreshing", promotionCoordinator.getStatus().running());
         model.addAttribute("refreshText", refreshText);
         model.addAttribute("refreshError", status.lastError());
         return "elements/shared/element-status";
