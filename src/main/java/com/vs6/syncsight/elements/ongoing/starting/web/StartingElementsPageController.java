@@ -4,6 +4,8 @@ import com.vs6.syncsight.elements.ongoing.starting.service.StartingElementsRefre
 import com.vs6.syncsight.elements.shared.model.ElementCount;
 import com.vs6.syncsight.elements.shared.model.ElementPromotion;
 import com.vs6.syncsight.elements.shared.model.ElementPromotionCheck;
+import com.vs6.syncsight.elements.shared.model.ElementStatus;
+import com.vs6.syncsight.elements.shared.model.ElementStatusEvaluator;
 import com.vs6.syncsight.elements.shared.model.ElementStoreRow;
 import com.vs6.syncsight.promotions.shared.sync.RefreshStatus;
 import org.springframework.stereotype.Controller;
@@ -67,7 +69,7 @@ public class StartingElementsPageController {
         String refreshText = status.stage()
                 + (status.total() > 0 ? " (" + status.done() + "/" + status.total() + " stores)" : "");
 
-        model.addAttribute("pageTitle", "Starting Promotion Elements");
+        model.addAttribute("pageTitle", "Starting Promotions");
         model.addAttribute("basePath", BASE_PATH);
         model.addAttribute("view", "store".equals(view) ? "store" : "promo");
         model.addAttribute("today", LocalDate.now().format(HEADER_DATE));
@@ -88,15 +90,18 @@ public class StartingElementsPageController {
 
     private PromoView toPromoView(ElementPromotionCheck check) {
         ElementPromotion p = check.promo();
-        List<StoreView> stores = check.stores().stream().map(this::toStoreView).toList();
+        List<StoreView> stores = check.stores().stream().map(row -> toStoreView(p, row)).toList();
         return new PromoView(p.promoId(), p.memoNumber(), p.elementCount(), p.storeCount(),
                 p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE), p.durationText(), stores);
     }
 
-    private StoreView toStoreView(ElementStoreRow row) {
+    private StoreView toStoreView(ElementPromotion p, ElementStoreRow row) {
+        ElementStatus st = ElementStatusEvaluator.evaluate(
+                row.storeId(), p.elementCount(), row.enterprise(), row.local());
         return new StoreView(row.storeId(), row.storeName(),
-                countText(row.enterprise()), countClass(row.enterprise()),
-                countText(row.local()), countClass(row.local()));
+                countText(row.enterprise()), countClass(row.enterprise(), st.enterpriseColor()),
+                countText(row.local()), countClass(row.local(), st.localColor()),
+                st.label(), statusClass(st));
     }
 
     // ---------- By Store ----------
@@ -109,12 +114,15 @@ public class StartingElementsPageController {
         for (ElementPromotionCheck check : report) {
             ElementPromotion p = check.promo();
             for (ElementStoreRow row : check.stores()) {
+                ElementStatus st = ElementStatusEvaluator.evaluate(
+                        row.storeId(), p.elementCount(), row.enterprise(), row.local());
                 names.putIfAbsent(row.storeId(), row.storeName());
                 byStore.computeIfAbsent(row.storeId(), k -> new ArrayList<>())
                         .add(new StorePromoRowView(p.promoId(), p.memoNumber(), p.elementCount(),
                                 p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE),
-                                countText(row.enterprise()), countClass(row.enterprise()),
-                                countText(row.local()), countClass(row.local())));
+                                countText(row.enterprise()), countClass(row.enterprise(), st.enterpriseColor()),
+                                countText(row.local()), countClass(row.local(), st.localColor()),
+                                st.label(), statusClass(st)));
             }
         }
 
@@ -145,10 +153,18 @@ public class StartingElementsPageController {
         };
     }
 
-    private String countClass(ElementCount count) {
-        return count.isOk()
-                ? "num"
-                : "badge status-" + count.status().name().toLowerCase().replace('_', '-');
+    // Error labels keep their own colour; a fetched count gets green or amber when the status says so
+    private String countClass(ElementCount count, String color) {
+        if (!count.isOk()) {
+            return "badge status-" + count.status().name().toLowerCase().replace('_', '-');
+        }
+        return color.isEmpty() ? "num" : "badge hl-" + color;
+    }
+
+    private String statusClass(ElementStatus status) {
+        return status.label().isEmpty()
+                ? ""
+                : "badge st-" + status.name().toLowerCase().replace('_', '-');
     }
 
     // ---------- shapes handed to the page ----------
@@ -158,7 +174,8 @@ public class StartingElementsPageController {
 
     public record StoreView(int storeId, String storeName,
                             String enterpriseText, String enterpriseClass,
-                            String localText, String localClass) {}
+                            String localText, String localClass,
+                            String statusText, String statusClass) {}
 
     public record StoreGroupView(int storeId, String storeName, String promoCountText,
                                  List<StorePromoRowView> promos) {}
@@ -166,5 +183,6 @@ public class StartingElementsPageController {
     public record StorePromoRowView(int promoId, String memoNumber, long elementCount,
                                     String startDate, String endDate,
                                     String enterpriseText, String enterpriseClass,
-                                    String localText, String localClass) {}
+                                    String localText, String localClass,
+                                    String statusText, String statusClass) {}
 }
