@@ -7,14 +7,14 @@ import com.vs6.syncsight.elements.shared.model.ElementPromotionCheck;
 import com.vs6.syncsight.elements.shared.model.ElementStatus;
 import com.vs6.syncsight.elements.shared.model.ElementStatusEvaluator;
 import com.vs6.syncsight.elements.shared.model.ElementStoreRow;
-import com.vs6.syncsight.promotions.shared.sync.RefreshStatus;
 import com.vs6.syncsight.promotions.shared.sync.PromotionRefreshCoordinator;
+import com.vs6.syncsight.promotions.shared.sync.RefreshStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,6 +31,7 @@ import java.util.TreeMap;
 /**
  * Elements > Ongoing > Starting page.
  * Opening it starts the Elements load (only the first time), then shows the report.
+ * Tabs: "All" (every promo and store) and "Anomalies" (only the rows with a problem).
  */
 @Controller
 @RequestMapping("/sync-sight/elements/ongoing/starting")
@@ -52,24 +53,33 @@ public class StartingElementsPageController {
     }
 
     // The Refresh button. Does nothing while a Promotions refresh is running.
+    // Comes back to the same tab and view.
     @PostMapping("/refresh")
-    public String refresh(@RequestParam(defaultValue = "promo") String view) {
+    public String refresh(@RequestParam(defaultValue = "all") String tab,
+                          @RequestParam(defaultValue = "promo") String view) {
         if (!promotionCoordinator.getStatus().running()) {
             service.startRefresh();
         }
-        return "redirect:" + BASE_PATH + "?view=" + ("store".equals(view) ? "store" : "promo");
+        String safeTab = "anomalies".equals(tab) ? "anomalies" : "all";
+        String safeView = "store".equals(view) ? "store" : "promo";
+        return "redirect:" + BASE_PATH + "?tab=" + safeTab + "&view=" + safeView;
     }
 
     @GetMapping
-    public String page(@RequestParam(defaultValue = "promo") String view, Model model) {
+    public String page(@RequestParam(defaultValue = "all") String tab,
+                       @RequestParam(defaultValue = "promo") String view,
+                       Model model) {
         service.startIfNeverStarted();
+        boolean anomaliesTab = "anomalies".equals(tab);
 
         Instant refreshed = service.getLastRefreshed();
         RefreshStatus status = service.getStatus();
         List<ElementPromotionCheck> report = service.getReport();
 
-        List<PromoView> promos = report.stream().map(this::toPromoView).toList();
-        List<StoreGroupView> storeGroups = toStoreGroups(report);
+        // The current tab decides which rows are shown
+        List<PromoView> promos = toPromoViews(report, anomaliesTab);
+        List<StoreGroupView> storeGroups = toStoreGroups(report, anomaliesTab);
+        long anomalyCount = countAnomalies(report);
 
         String emptyMessage;
         if (refreshed == null) {
@@ -77,7 +87,7 @@ public class StartingElementsPageController {
                     ? "Loading the data... this page reloads by itself."
                     : "No data yet.";
         } else {
-            emptyMessage = "No promotions start today.";
+            emptyMessage = anomaliesTab ? "No anomalies found." : "No promotions start today.";
         }
 
         String refreshText = status.stage()
@@ -85,11 +95,13 @@ public class StartingElementsPageController {
 
         model.addAttribute("pageTitle", "Starting Promotions Elements");
         model.addAttribute("basePath", BASE_PATH);
+        model.addAttribute("tab", anomaliesTab ? "anomalies" : "all");
         model.addAttribute("view", "store".equals(view) ? "store" : "promo");
         model.addAttribute("today", LocalDate.now().format(HEADER_DATE));
         model.addAttribute("retrievedTime",
                 refreshed == null ? "--:--:--" : TIME.format(refreshed.atZone(ZoneId.systemDefault())));
-        model.addAttribute("promoCount", promos.size());
+        model.addAttribute("promoCount", report.size());
+        model.addAttribute("anomalyCount", anomalyCount);
         model.addAttribute("promos", promos);
         model.addAttribute("storeGroups", storeGroups);
         model.addAttribute("nothingToShow", promos.isEmpty());
@@ -103,16 +115,33 @@ public class StartingElementsPageController {
 
     // ---------- By Promo ----------
 
-    private PromoView toPromoView(ElementPromotionCheck check) {
-        ElementPromotion p = check.promo();
-        List<StoreView> stores = check.stores().stream().map(row -> toStoreView(p, row)).toList();
-        return new PromoView(p.promoId(), p.memoNumber(), p.elementCount(), p.storeCount(),
-                p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE), p.durationText(), stores);
+    // anomaliesOnly = false: every promo with all its stores
+    // anomaliesOnly = true:  only promos that have at least one store with a problem, listing only those stores
+    private List<PromoView> toPromoViews(List<ElementPromotionCheck> report, boolean anomaliesOnly) {
+        List<PromoView> views = new ArrayList<>();
+        for (ElementPromotionCheck check : report) {
+            ElementPromotion p = check.promo();
+            List<StoreView> stores = new ArrayList<>();
+            for (ElementStoreRow row : check.stores()) {
+                ElementStatus st = statusOf(p, row);
+                if (anomaliesOnly && !st.isAnomaly()) {
+                    continue;
+                }
+                stores.add(toStoreView(row, st));
+            }
+            if (anomaliesOnly && stores.isEmpty()) {
+                continue;
+            }
+            String storeCountText = anomaliesOnly
+                    ? stores.size() + " of " + p.storeCount()
+                    : String.valueOf(p.storeCount());
+            views.add(new PromoView(p.promoId(), p.memoNumber(), p.elementCount(), storeCountText,
+                    p.startDate().format(ROW_DATE), p.endDate().format(ROW_DATE), p.durationText(), stores));
+        }
+        return views;
     }
 
-    private StoreView toStoreView(ElementPromotion p, ElementStoreRow row) {
-        ElementStatus st = ElementStatusEvaluator.evaluate(
-                row.storeId(), p.elementCount(), row.enterprise(), row.local());
+    private StoreView toStoreView(ElementStoreRow row, ElementStatus st) {
         return new StoreView(row.storeId(), row.storeName(),
                 countText(row.enterprise()), countClass(row.enterprise(), st.enterpriseColor()),
                 countText(row.local()), countClass(row.local(), st.localColor()),
@@ -122,15 +151,17 @@ public class StartingElementsPageController {
     // ---------- By Store ----------
 
     // Flip the report: from "promos with their stores" to "stores with their promos"
-    private List<StoreGroupView> toStoreGroups(List<ElementPromotionCheck> report) {
+    private List<StoreGroupView> toStoreGroups(List<ElementPromotionCheck> report, boolean anomaliesOnly) {
         Map<Integer, List<StorePromoRowView>> byStore = new TreeMap<>();   // sorted by store ID
         Map<Integer, String> names = new HashMap<>();
 
         for (ElementPromotionCheck check : report) {
             ElementPromotion p = check.promo();
             for (ElementStoreRow row : check.stores()) {
-                ElementStatus st = ElementStatusEvaluator.evaluate(
-                        row.storeId(), p.elementCount(), row.enterprise(), row.local());
+                ElementStatus st = statusOf(p, row);
+                if (anomaliesOnly && !st.isAnomaly()) {
+                    continue;
+                }
                 names.putIfAbsent(row.storeId(), row.storeName());
                 byStore.computeIfAbsent(row.storeId(), k -> new ArrayList<>())
                         .add(new StorePromoRowView(p.promoId(), p.memoNumber(), p.elementCount(),
@@ -153,6 +184,18 @@ public class StartingElementsPageController {
     }
 
     // ---------- helpers ----------
+
+    private ElementStatus statusOf(ElementPromotion p, ElementStoreRow row) {
+        return ElementStatusEvaluator.evaluate(row.storeId(), p.elementCount(), row.enterprise(), row.local());
+    }
+
+    // How many promo-store rows have a problem (the number on the Anomalies tab)
+    private long countAnomalies(List<ElementPromotionCheck> report) {
+        return report.stream()
+                .flatMap(check -> check.stores().stream().map(row -> statusOf(check.promo(), row)))
+                .filter(ElementStatus::isAnomaly)
+                .count();
+    }
 
     // A number when the count was fetched, otherwise the reason it was not
     private String countText(ElementCount count) {
@@ -184,7 +227,7 @@ public class StartingElementsPageController {
 
     // ---------- shapes handed to the page ----------
 
-    public record PromoView(int promoId, String memoNumber, long elementCount, int storeCount,
+    public record PromoView(int promoId, String memoNumber, long elementCount, String storeCountText,
                             String startDate, String endDate, String duration, List<StoreView> stores) {}
 
     public record StoreView(int storeId, String storeName,

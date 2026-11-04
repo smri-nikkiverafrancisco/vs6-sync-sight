@@ -23,4 +23,9 @@ public enum ElementStatus {
     public String label() { return label; }
     public String enterpriseColor() { return enterpriseColor; }
     public String localColor() { return localColor; }
+
+    // Shown in the Anomalies tab
+    public boolean isAnomaly() {
+        return this == SOURCE_MISMATCH || this == NOT_TALLY || this == MISMATCH || this == INCOMPLETE;
+    }
 }

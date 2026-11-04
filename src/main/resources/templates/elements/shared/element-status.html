@@ -29,6 +29,10 @@
                text-decoration:none; color:var(--muted); }
         .tab.active { color:var(--fg); font-weight:600; border-color:var(--line); background:var(--head); }
 
+        .count { display:inline-block; min-width:18px; padding:0 6px; margin-left:6px; border-radius:9px;
+                 color:#fff; font-size:12px; text-align:center; }
+        .count.warn { background:#bf8700; }
+
         .actions { margin-bottom:12px; display:flex; gap:8px; }
         button { padding:6px 12px; border:1px solid var(--line); background:var(--head); color:var(--fg);
                  border-radius:6px; cursor:pointer; }
@@ -83,6 +87,7 @@
     <!-- The Refresh button comes later; for now only the loading progress is shown -->
     <div class="refreshbar">
         <form method="post" th:action="@{|${basePath}/refresh|}">
+            <input type="hidden" name="tab" th:value="${tab}">
             <input type="hidden" name="view" th:value="${view}">
             <button type="submit" th:disabled="${refreshing or promotionsRefreshing}"
                     th:text="${refreshing} ? 'Refreshing...' : 'Refresh'">Refresh</button>
@@ -98,16 +103,22 @@
     <span>Group Results</span>
     <div class="switch">
         <a th:classappend="${view == 'promo'} ? 'active'"
-           th:href="@{${basePath}(view='promo')}">By Promo</a>
+           th:href="@{${basePath}(tab=${tab},view='promo')}">By Promo</a>
         <a th:classappend="${view == 'store'} ? 'active'"
-           th:href="@{${basePath}(view='store')}">By Store</a>
+           th:href="@{${basePath}(tab=${tab},view='store')}">By Store</a>
     </div>
 </div>
 <br>
 
 <!-- Only the "All" tab for now; the Class A / Class B tabs come with the status step -->
 <nav class="tabs">
-    <a class="tab active" th:href="@{${basePath}(view=${view})}">All</a>
+    <a class="tab" th:classappend="${tab == 'all'} ? 'active'"
+       th:href="@{${basePath}(tab='all',view=${view})}">All</a>
+    <a class="tab" th:classappend="${tab == 'anomalies'} ? 'active'"
+       th:href="@{${basePath}(tab='anomalies',view=${view})}">
+        Anomalies
+        <span class="count warn" th:if="${anomalyCount > 0}" th:text="${anomalyCount}">0</span>
+    </a>
 </nav>
 
 <div class="actions">
@@ -131,7 +142,7 @@
             <span th:text="${p.promoId()}">74773</span>
             <span th:text="${p.memoNumber()}">SBU2-0299</span>
             <span class="num" th:text="${p.elementCount()}">92754</span>
-            <span th:text="${p.storeCount()}">1</span>
+            <span th:text="${p.storeCountText()}">1</span>
             <span th:text="${p.startDate()}">10-30-26</span>
             <span th:text="${p.endDate()}">10-31-26</span>
             <span th:text="${p.duration()}">2 days</span>
