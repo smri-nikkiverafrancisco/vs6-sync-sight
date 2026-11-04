@@ -2,13 +2,12 @@ package com.vs6.syncsight.elements.shared.sync;
 
 import com.vs6.syncsight.elements.shared.model.ElementCount;
 import com.vs6.syncsight.shared.source.Source;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-// The album of element counts: one card per source (Enterprise or Local), store and promo
-@Component
+// The album of element counts: one card per source (Enterprise or Local), store and promo.
+// Every Elements page makes its OWN album (new ElementCountStore()).
 public class ElementCountStore {
 
     private final Map<String, ElementCount> counts = new ConcurrentHashMap<>();

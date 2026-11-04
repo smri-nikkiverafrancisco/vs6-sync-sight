@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Elements list fragments (shared)</title>
+</head>
+<body>
+
+<!-- BY PROMO list: promo rows that open into their store rows -->
+<th:block th:fragment="promoList(list)">
+    <div class="row head">
+        <span>Promo ID</span><span>Memo Number</span><span>Elements Count</span><span>Store Count</span>
+        <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
+    </div>
+
+    <details class="promo" th:each="p : ${list}">
+        <summary class="row">
+            <span th:text="${p.promoId()}">74773</span>
+            <span th:text="${p.memoNumber()}">SBU2-0299</span>
+            <span class="num" th:text="${p.elementCount()}">92754</span>
+            <span th:text="${p.storeCountText()}">1</span>
+            <span th:text="${p.startDate()}">10-30-26</span>
+            <span th:text="${p.endDate()}">10-31-26</span>
+            <span th:text="${p.duration()}">2 days</span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${p.stores()}">
+                <td th:text="${s.storeId()}">2</td>
+                <td th:text="${s.storeName()}">Megamall</td>
+                <td><span th:class="${s.enterpriseClass()}" th:text="${s.enterpriseText()}">92550</span></td>
+                <td><span th:class="${s.localClass()}" th:text="${s.localText()}">87625</span></td>
+                <td><span th:if="${s.statusText() != ''}" th:class="${s.statusClass()}" th:text="${s.statusText()}">Matched</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</th:block>
+
+<!-- BY STORE list: store rows that open into their promo rows -->
+<th:block th:fragment="storeList(list)">
+    <div class="row head bystore">
+        <span>Store ID</span><span>Store Name</span><span>Promos</span>
+    </div>
+
+    <details class="promo" th:each="g : ${list}">
+        <summary class="row bystore">
+            <span th:text="${g.storeId()}">2</span>
+            <span th:text="${g.storeName()}">Megamall</span>
+            <span th:text="${g.promoCountText()}">12 promos</span>
+        </summary>
+
+        <table class="stores">
+            <thead>
+            <tr><th>Promo ID</th><th>Memo Number</th><th>Elements Count</th><th>Start Date</th><th>End Date</th>
+                <th>Enterprise</th><th>Local</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="p : ${g.promos()}">
+                <td th:text="${p.promoId()}">74773</td>
+                <td th:text="${p.memoNumber()}">SBU2-0299</td>
+                <td class="num" th:text="${p.elementCount()}">92754</td>
+                <td th:text="${p.startDate()}">10-30-26</td>
+                <td th:text="${p.endDate()}">10-31-26</td>
+                <td><span th:class="${p.enterpriseClass()}" th:text="${p.enterpriseText()}">92550</span></td>
+                <td><span th:class="${p.localClass()}" th:text="${p.localText()}">87625</span></td>
+                <td><span th:if="${p.statusText() != ''}" th:class="${p.statusClass()}" th:text="${p.statusText()}">Matched</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
+</th:block>
+
+</body>
+</html>

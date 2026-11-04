@@ -27,11 +27,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 
 /**
  * Elements > Ongoing > Starting page.
  * Opening it starts the Elements load (only the first time), then shows the report.
- * Tabs: "All" (every promo and store) and "Anomalies" (only the rows with a problem).
+ * Tabs: "All" (every promo and store) and "Anomalies" (one section per kind of problem).
  */
 @Controller
 @RequestMapping("/sync-sight/elements/ongoing/starting")
@@ -42,6 +43,14 @@ public class StartingElementsPageController {
             DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH);
     private static final DateTimeFormatter ROW_DATE = DateTimeFormatter.ofPattern("MM-dd-yy");
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    // The sections of the Anomalies tab, in this order
+    private static final List<ElementStatus> SECTION_ORDER = List.of(
+            ElementStatus.NO_ELEMENTS,
+            ElementStatus.NOT_TALLY,
+            ElementStatus.MISMATCH,
+            ElementStatus.SOURCE_MISMATCH,
+            ElementStatus.INCOMPLETE);          // shown as "API Error"
 
     private final StartingElementsRefreshService service;
     private final PromotionRefreshCoordinator promotionCoordinator;
@@ -76,10 +85,12 @@ public class StartingElementsPageController {
         RefreshStatus status = service.getStatus();
         List<ElementPromotionCheck> report = service.getReport();
 
-        // The current tab decides which rows are shown
-        List<PromoView> promos = toPromoViews(report, anomaliesTab);
-        List<StoreGroupView> storeGroups = toStoreGroups(report, anomaliesTab);
-        long anomalyCount = countAnomalies(report);
+        // "All" tab: every row.  "Anomalies" tab: one section per kind of problem.
+        List<PromoView> promos = anomaliesTab ? List.of() : toPromoViews(report, s -> true, false);
+        List<StoreGroupView> storeGroups = anomaliesTab ? List.of() : toStoreGroups(report, s -> true);
+        List<SectionView> sections = toSections(report);
+        long anomalyCount = sections.stream().mapToLong(SectionView::rowCount).sum();
+        boolean nothingToShow = anomaliesTab ? sections.isEmpty() : promos.isEmpty();
 
         String emptyMessage;
         if (refreshed == null) {
@@ -104,7 +115,8 @@ public class StartingElementsPageController {
         model.addAttribute("anomalyCount", anomalyCount);
         model.addAttribute("promos", promos);
         model.addAttribute("storeGroups", storeGroups);
-        model.addAttribute("nothingToShow", promos.isEmpty());
+        model.addAttribute("sections", sections);
+        model.addAttribute("nothingToShow", nothingToShow);
         model.addAttribute("emptyMessage", emptyMessage);
         model.addAttribute("refreshing", status.running());
         model.addAttribute("promotionsRefreshing", promotionCoordinator.getStatus().running());
@@ -113,26 +125,44 @@ public class StartingElementsPageController {
         return "elements/shared/element-status";
     }
 
+    // ---------- Anomalies tab: the sections ----------
+
+    private List<SectionView> toSections(List<ElementPromotionCheck> report) {
+        List<SectionView> sections = new ArrayList<>();
+        for (ElementStatus status : SECTION_ORDER) {
+            Predicate<ElementStatus> onlyThisStatus = s -> s == status;
+            List<PromoView> promos = toPromoViews(report, onlyThisStatus, true);
+            if (promos.isEmpty()) {
+                continue;                                   // empty sections are hidden
+            }
+            long rows = promos.stream().mapToLong(p -> p.stores().size()).sum();
+            sections.add(new SectionView(status.label(), statusClass(status), rows,
+                    promos, toStoreGroups(report, onlyThisStatus)));
+        }
+        return sections;
+    }
+
     // ---------- By Promo ----------
 
-    // anomaliesOnly = false: every promo with all its stores
-    // anomaliesOnly = true:  only promos that have at least one store with a problem, listing only those stores
-    private List<PromoView> toPromoViews(List<ElementPromotionCheck> report, boolean anomaliesOnly) {
+    // 'include' decides which store rows are kept.
+    // partial = true: promos with no kept rows are left out, and the store count reads "2 of 5".
+    private List<PromoView> toPromoViews(List<ElementPromotionCheck> report,
+                                         Predicate<ElementStatus> include, boolean partial) {
         List<PromoView> views = new ArrayList<>();
         for (ElementPromotionCheck check : report) {
             ElementPromotion p = check.promo();
             List<StoreView> stores = new ArrayList<>();
             for (ElementStoreRow row : check.stores()) {
                 ElementStatus st = statusOf(p, row);
-                if (anomaliesOnly && !st.isAnomaly()) {
+                if (!include.test(st)) {
                     continue;
                 }
                 stores.add(toStoreView(row, st));
             }
-            if (anomaliesOnly && stores.isEmpty()) {
+            if (partial && stores.isEmpty()) {
                 continue;
             }
-            String storeCountText = anomaliesOnly
+            String storeCountText = partial
                     ? stores.size() + " of " + p.storeCount()
                     : String.valueOf(p.storeCount());
             views.add(new PromoView(p.promoId(), p.memoNumber(), p.elementCount(), storeCountText,
@@ -151,7 +181,8 @@ public class StartingElementsPageController {
     // ---------- By Store ----------
 
     // Flip the report: from "promos with their stores" to "stores with their promos"
-    private List<StoreGroupView> toStoreGroups(List<ElementPromotionCheck> report, boolean anomaliesOnly) {
+    private List<StoreGroupView> toStoreGroups(List<ElementPromotionCheck> report,
+                                               Predicate<ElementStatus> include) {
         Map<Integer, List<StorePromoRowView>> byStore = new TreeMap<>();   // sorted by store ID
         Map<Integer, String> names = new HashMap<>();
 
@@ -159,7 +190,7 @@ public class StartingElementsPageController {
             ElementPromotion p = check.promo();
             for (ElementStoreRow row : check.stores()) {
                 ElementStatus st = statusOf(p, row);
-                if (anomaliesOnly && !st.isAnomaly()) {
+                if (!include.test(st)) {
                     continue;
                 }
                 names.putIfAbsent(row.storeId(), row.storeName());
@@ -189,14 +220,6 @@ public class StartingElementsPageController {
         return ElementStatusEvaluator.evaluate(row.storeId(), p.elementCount(), row.enterprise(), row.local());
     }
 
-    // How many promo-store rows have a problem (the number on the Anomalies tab)
-    private long countAnomalies(List<ElementPromotionCheck> report) {
-        return report.stream()
-                .flatMap(check -> check.stores().stream().map(row -> statusOf(check.promo(), row)))
-                .filter(ElementStatus::isAnomaly)
-                .count();
-    }
-
     // A number when the count was fetched, otherwise the reason it was not
     private String countText(ElementCount count) {
         if (count.isOk()) {
@@ -204,11 +227,11 @@ public class StartingElementsPageController {
         }
         return switch (count.status()) {
             case API_ERROR -> "API Error";
+            case NO_ELEMENTS -> "No Elements";
             case CONNECTION_ERROR -> "Connection Error";
             case TIMEOUT -> "Timeout";
             case NO_LOCAL_SITE -> "No Local Site";
             case OK -> "";
-            case NO_ELEMENTS -> "No Elements";
         };
     }
 
@@ -227,6 +250,9 @@ public class StartingElementsPageController {
     }
 
     // ---------- shapes handed to the page ----------
+
+    public record SectionView(String title, String titleClass, long rowCount,
+                              List<PromoView> promos, List<StoreGroupView> storeGroups) {}
 
     public record PromoView(int promoId, String memoNumber, long elementCount, String storeCountText,
                             String startDate, String endDate, String duration, List<StoreView> stores) {}

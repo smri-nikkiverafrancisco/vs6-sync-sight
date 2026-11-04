@@ -12,7 +12,18 @@ public final class ElementStatusEvaluator {
         if (storeId >= STATUS_STORES_BELOW) {
             return ElementStatus.NOT_APPLICABLE;
         }
-        if (!enterprise.isOk() || !local.isOk()) {
+        if (enterprise.status() == ElementCount.Status.NO_ELEMENTS
+                || local.status() == ElementCount.Status.NO_ELEMENTS) {
+            return ElementStatus.NO_ELEMENTS;
+        }
+        if (!enterprise.isOk()) {
+            return ElementStatus.INCOMPLETE;
+        }
+        // No local site: nothing to compare with, and it is not an error
+        if (local.status() == ElementCount.Status.NO_LOCAL_SITE) {
+            return ElementStatus.NOT_APPLICABLE;
+        }
+        if (!local.isOk()) {
             return ElementStatus.INCOMPLETE;
         }
 

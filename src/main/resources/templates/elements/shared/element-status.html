@@ -28,7 +28,6 @@
         .tab { padding:8px 16px; border:1px solid transparent; border-bottom:none; border-radius:6px 6px 0 0;
                text-decoration:none; color:var(--muted); }
         .tab.active { color:var(--fg); font-weight:600; border-color:var(--line); background:var(--head); }
-
         .count { display:inline-block; min-width:18px; padding:0 6px; margin-left:6px; border-radius:9px;
                  color:#fff; font-size:12px; text-align:center; }
         .count.warn { background:#bf8700; }
@@ -38,8 +37,8 @@
                  border-radius:6px; cursor:pointer; }
         button:hover { border-color:var(--muted); }
         button:disabled { opacity:.5; cursor:not-allowed; }
-        .refreshbar form { margin:0; }
         .refreshbar { display:flex; align-items:center; gap:10px; margin-top:6px; }
+        .refreshbar form { margin:0; }
 
         .row { display:grid; grid-template-columns:1fr 1.4fr 1fr .8fr 1fr 1fr 1.4fr; gap:8px; padding:8px 10px; align-items:center; }
         .row.bystore { grid-template-columns:1fr 2.4fr 2.1fr; }
@@ -55,21 +54,24 @@
         table.stores th, table.stores td { padding:5px 14px; border:1px solid var(--line); text-align:left; }
         table.stores th { background:var(--head); }
 
+        .sect { margin:0 0 28px; }
+        .sect-title { display:flex; align-items:center; gap:10px; margin:0 0 8px; font-size:16px; }
+        .sect-count { color:var(--muted); font-weight:normal; }
+
         .num { font-variant-numeric:tabular-nums; }
         .badge { display:inline-block; padding:2px 8px; border-radius:10px; color:#fff; font-size:12px;
                  background:var(--c, #6b7280); }
         .status-api-error { --c:#d4620a; }
+        .status-no-elements { --c:#cf222e; }
         .status-connection-error { --c:#a40e26; }
         .status-timeout { --c:#9a6700; }
         .status-no-local-site { --c:#8c959f; }
-        .status-no-elements { --c:#cf222e; }
-
         .hl-green { --c:#1a7f37; }
         .hl-amber { --c:#bf8700; }
         .st-matched { --c:#1a7f37; }
         .st-source-mismatch, .st-not-tally, .st-mismatch { --c:#bf8700; }
-        .st-incomplete { --c:#8c959f; }
         .st-no-elements { --c:#cf222e; }
+        .st-incomplete { --c:#d4620a; }
 
         .empty { padding:24px; color:var(--muted); border:1px dashed var(--line); border-radius:6px; }
     </style>
@@ -81,12 +83,11 @@
 <!-- Elements top menu -->
 <div th:replace="~{shared/elements-topnav :: nav}"></div>
 
-<h1 th:text="${#strings.toUpperCase(pageTitle)}">STARTING PROMOTION ELEMENTS</h1>
+<h1 th:text="${#strings.toUpperCase(pageTitle)}">STARTING PROMOTIONS</h1>
 <div class="meta">
     <div th:text="${today}">Wednesday, October 14, 2026</div>
     <div>Retrieved Time: <b th:text="${retrievedTime}">00:00:00</b></div>
     <div>No. of Promos: <b th:text="${promoCount}">0</b></div>
-    <!-- The Refresh button comes later; for now only the loading progress is shown -->
     <div class="refreshbar">
         <form method="post" th:action="@{|${basePath}/refresh|}">
             <input type="hidden" name="tab" th:value="${tab}">
@@ -100,7 +101,7 @@
 </div>
 <br><br>
 
-<!-- Group by -->
+<!-- Group by: applies to BOTH tabs -->
 <div class="viewbar">
     <span>Group Results</span>
     <div class="switch">
@@ -112,7 +113,6 @@
 </div>
 <br>
 
-<!-- Only the "All" tab for now; the Class A / Class B tabs come with the status step -->
 <nav class="tabs">
     <a class="tab" th:classappend="${tab == 'all'} ? 'active'"
        th:href="@{${basePath}(tab='all',view=${view})}">All</a>
@@ -132,74 +132,29 @@
 
 <div class="empty" th:if="${nothingToShow}" th:text="${emptyMessage}"></div>
 
-<!-- ================= BY PROMO ================= -->
-<div th:if="${view == 'promo' and not nothingToShow}">
-    <div class="row head">
-        <span>Promo ID</span><span>Memo Number</span><span>Elements Count</span><span>Store Count</span>
-        <span>Start Date</span><span>End Date</span><span>Promo Duration</span>
-    </div>
+<!-- ================= ALL TAB ================= -->
+<th:block th:if="${tab == 'all' and view == 'promo' and not nothingToShow}">
+    <div th:replace="~{elements/shared/element-fragments :: promoList(${promos})}"></div>
+</th:block>
+<th:block th:if="${tab == 'all' and view == 'store' and not nothingToShow}">
+    <div th:replace="~{elements/shared/element-fragments :: storeList(${storeGroups})}"></div>
+</th:block>
 
-    <details class="promo" th:each="p : ${promos}">
-        <summary class="row">
-            <span th:text="${p.promoId()}">74773</span>
-            <span th:text="${p.memoNumber()}">SBU2-0299</span>
-            <span class="num" th:text="${p.elementCount()}">92754</span>
-            <span th:text="${p.storeCountText()}">1</span>
-            <span th:text="${p.startDate()}">10-30-26</span>
-            <span th:text="${p.endDate()}">10-31-26</span>
-            <span th:text="${p.duration()}">2 days</span>
-        </summary>
-
-        <table class="stores">
-            <thead>
-            <tr><th>Store ID</th><th>Store Name</th><th>Enterprise</th><th>Local</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-            <tr th:each="s : ${p.stores()}">
-                <td th:text="${s.storeId()}">2</td>
-                <td th:text="${s.storeName()}">Megamall</td>
-                <td><span th:class="${s.enterpriseClass()}" th:text="${s.enterpriseText()}">92550</span></td>
-                <td><span th:class="${s.localClass()}" th:text="${s.localText()}">87625</span></td>
-                <td><span th:if="${s.statusText() != ''}" th:class="${s.statusClass()}" th:text="${s.statusText()}">Matched</span></td>
-            </tr>
-            </tbody>
-        </table>
-    </details>
-</div>
-
-<!-- ================= BY STORE ================= -->
-<div th:if="${view == 'store' and not nothingToShow}">
-    <div class="row head bystore">
-        <span>Store ID</span><span>Store Name</span><span>Promos</span>
-    </div>
-
-    <details class="promo" th:each="g : ${storeGroups}">
-        <summary class="row bystore">
-            <span th:text="${g.storeId()}">2</span>
-            <span th:text="${g.storeName()}">Megamall</span>
-            <span th:text="${g.promoCountText()}">12 promos</span>
-        </summary>
-
-        <table class="stores">
-            <thead>
-            <tr><th>Promo ID</th><th>Memo Number</th><th>Elements Count</th><th>Start Date</th><th>End Date</th>
-                <th>Enterprise</th><th>Local</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-            <tr th:each="p : ${g.promos()}">
-                <td th:text="${p.promoId()}">74773</td>
-                <td th:text="${p.memoNumber()}">SBU2-0299</td>
-                <td class="num" th:text="${p.elementCount()}">92754</td>
-                <td th:text="${p.startDate()}">10-30-26</td>
-                <td th:text="${p.endDate()}">10-31-26</td>
-                <td><span th:class="${p.enterpriseClass()}" th:text="${p.enterpriseText()}">92550</span></td>
-                <td><span th:class="${p.localClass()}" th:text="${p.localText()}">87625</span></td>
-                <td><span th:if="${p.statusText() != ''}" th:class="${p.statusClass()}" th:text="${p.statusText()}">Matched</span></td>
-            </tr>
-            </tbody>
-        </table>
-    </details>
-</div>
+<!-- ================= ANOMALIES TAB: one section per kind of problem ================= -->
+<th:block th:if="${tab == 'anomalies' and not nothingToShow}">
+    <section class="sect" th:each="sec : ${sections}">
+        <h2 class="sect-title">
+            <span th:class="${sec.titleClass()}" th:text="${sec.title()}">No Elements</span>
+            <span class="sect-count" th:text="${sec.rowCount()}">3</span>
+        </h2>
+        <th:block th:if="${view == 'promo'}">
+            <div th:replace="~{elements/shared/element-fragments :: promoList(${sec.promos()})}"></div>
+        </th:block>
+        <th:block th:if="${view == 'store'}">
+            <div th:replace="~{elements/shared/element-fragments :: storeList(${sec.storeGroups()})}"></div>
+        </th:block>
+    </section>
+</th:block>
 
 <script>
     // Open or close every promo/store row

@@ -6,9 +6,10 @@ public enum ElementStatus {
     MATCHED("Matched", "green", "green"),
     SOURCE_MISMATCH("Source Mismatch", "amber", "green"),
     NOT_TALLY("Not Tally", "green", "amber"),
-    MISMATCH("Mismatch", "amber", "amber"),     // none of the three rules above fits
-    INCOMPLETE("Incomplete", "", ""),           // a count could not be fetched
-    NOT_APPLICABLE("", "", "");                 // stores that have no status yet
+    MISMATCH("Mismatch", "amber", "amber"),     // none of the rules above fits
+    NO_ELEMENTS("No Elements", "", ""),         // the promo exists in the store but has no elements
+    INCOMPLETE("API Error", "", ""),            // a count could not be fetched (API error, timeout, connection error)
+    NOT_APPLICABLE("", "", "");                 // no status for this row
 
     private final String label;
     private final String enterpriseColor;
@@ -24,8 +25,8 @@ public enum ElementStatus {
     public String enterpriseColor() { return enterpriseColor; }
     public String localColor() { return localColor; }
 
-    // Shown in the Anomalies tab
+    // Shown in the Anomalies tab: everything except Matched and rows without a status
     public boolean isAnomaly() {
-        return this == SOURCE_MISMATCH || this == NOT_TALLY || this == MISMATCH || this == INCOMPLETE;
+        return this != MATCHED && this != NOT_APPLICABLE;
     }
 }

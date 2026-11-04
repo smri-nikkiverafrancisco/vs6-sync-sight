@@ -35,8 +35,8 @@ public class StartingElementPromotionService {
                         ON p.XMLPromoId = pr.PromoId
                     INNER JOIN promotypes pt
                         ON pr.PromoTypeId = pt.PromoTypeId AND LOWER(pt.TypeDesc) NOT LIKE '%no pos scanning%'
-                    WHERE CAST(p.ActiveDateFrom AS DATE) = CAST(GETDATE() AS DATE)
-                    AND CAST(p.ActiveDateTo AS DATE) >= CAST(p.ActiveDateFrom AS DATE)
+                    WHERE CAST(p.ActiveDateTo AS DATE) >= CAST(p.ActiveDateFrom AS DATE)
+                    AND CAST(p.ActiveDateFrom AS DATE) = CAST(GETDATE() AS DATE)
                 ),
                 PromotionElements AS (
                     SELECT e.PromoID, COUNT(e.ElementID) AS element_count
