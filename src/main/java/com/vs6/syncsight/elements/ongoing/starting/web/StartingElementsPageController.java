@@ -208,6 +208,7 @@ public class StartingElementsPageController {
             case TIMEOUT -> "Timeout";
             case NO_LOCAL_SITE -> "No Local Site";
             case OK -> "";
+            case NO_ELEMENTS -> "No Elements";
         };
     }
 
