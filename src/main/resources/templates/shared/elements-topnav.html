@@ -15,7 +15,8 @@
         <div class="menu-group">
             <span class="menu-label">Ongoing</span>
             <div class="pills">
-                <span class="disabled" title="Coming soon">All<span class="soon">soon</span></span>
+                <a th:href="@{/sync-sight/elements/ongoing/all}"
+                   th:classappend="${basePath == '/sync-sight/elements/ongoing/all'} ? 'active'">All</a>
                 <a th:href="@{/sync-sight/elements/ongoing/starting}"
                    th:classappend="${basePath == '/sync-sight/elements/ongoing/starting'} ? 'active'">Starting</a>
             </div>
