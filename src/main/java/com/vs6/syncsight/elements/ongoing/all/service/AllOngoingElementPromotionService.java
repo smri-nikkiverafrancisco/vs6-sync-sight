@@ -4,6 +4,7 @@ import com.vs6.syncsight.elements.shared.model.ElementPromotion;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,8 +17,9 @@ public class AllOngoingElementPromotionService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    // "Which promos are ongoing today, for which stores, and how many elements does the DATABASE say they have?"
-    public List<ElementPromotion> getOngoingToday() {
+    // "Which promos are ongoing today AND started on this date, for which stores,
+    //  and how many elements does the DATABASE say they have?"
+    public List<ElementPromotion> getOngoingStartedOn(LocalDate startDate) {
         return jdbcTemplate.query(
                 """
                 WITH OngoingPromotions AS (
@@ -35,9 +37,9 @@ public class AllOngoingElementPromotionService {
                         ON p.XMLPromoId = pr.PromoId
                     INNER JOIN promotypes pt
                         ON pr.PromoTypeId = pt.PromoTypeId AND LOWER(pt.TypeDesc) NOT LIKE '%no pos scanning%'
-                    -- BETWEEN also leaves out cancelled promos (end date before start date)
                     WHERE CAST(p.ActiveDateTo AS DATE) >= CAST(p.ActiveDateFrom AS DATE)
-                    AND CAST(GETDATE() AS DATE) BETWEEN CAST(p.ActiveDateFrom AS DATE) AND CAST(p.ActiveDateTo AS DATE)
+                      AND CAST(GETDATE() AS DATE) BETWEEN CAST(p.ActiveDateFrom AS DATE) AND CAST(p.ActiveDateTo AS DATE)
+                      AND CAST(p.ActiveDateFrom AS DATE) = ?
                 ),
                 PromotionElements AS (
                     SELECT e.PromoID, COUNT(e.ElementID) AS element_count
@@ -96,6 +98,7 @@ public class AllOngoingElementPromotionService {
                             rs.getLong("element_count"),
                             days,
                             days <= 0 ? "0 Day" : rs.getString("promo_duration_aggregated"));
-                });
+                },
+                java.sql.Date.valueOf(startDate));
     }
 }

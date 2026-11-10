@@ -103,6 +103,12 @@ public abstract class AbstractElementsRefreshService {
         return true;
     }
 
+    // Forget the old report (used when a page is switched to other data)
+    protected void clearReport() {
+        report = List.of();
+        lastRefreshed = null;
+    }
+
     public List<ElementPromotionCheck> getReport() { return report; }
 
     public Instant getLastRefreshed() { return lastRefreshed; }

@@ -39,6 +39,9 @@
         button:disabled { opacity:.5; cursor:not-allowed; }
         .refreshbar { display:flex; align-items:center; gap:10px; margin-top:6px; }
         .refreshbar form { margin:0; }
+        .datebar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+        input[type=date] { padding:4px 8px; border:1px solid var(--line); border-radius:6px;
+            background:var(--bg); color:var(--fg); }
 
         .row { display:grid; grid-template-columns:1fr 1.4fr 1fr .8fr 1fr 1fr 1.4fr; gap:8px; padding:8px 10px; align-items:center; }
         .row.bystore { grid-template-columns:1fr 2.4fr 2.1fr; }
@@ -98,6 +101,13 @@
         <span th:if="${refreshing}" th:text="${refreshText}"></span>
         <span th:if="${promotionsRefreshing and not refreshing}">Promotions are refreshing. Refresh is available when they finish.</span>
     </div>
+    <form class="datebar" th:if="${showDatePicker}" method="post" th:action="@{|${basePath}/load|}">
+        <label for="startdate">Started on</label>
+        <input id="startdate" type="date" name="date" th:value="${pickedDate}" th:max="${maxDate}" required>
+        <input type="hidden" name="tab" th:value="${tab}">
+        <input type="hidden" name="view" th:value="${view}">
+        <button type="submit" th:disabled="${refreshing or promotionsRefreshing}">Load</button>
+    </form>
 </div>
 <br><br>
 

@@ -37,7 +37,8 @@ public class EndedPromotionService {
                         ON pr.promotypeid = pt.promotypeid AND LOWER(pt.TypeDesc) NOT LIKE '%no pos scanning%'
                     WHERE CAST(ActiveDateTo AS DATE) >= CAST(ActiveDateFrom AS DATE)
                     AND CAST(ActiveDateTo AS DATE) < CAST(GETDATE() AS DATE)
-                    AND CAST(ActiveDateTo AS DATE) >= DATEADD(DAY, -30, CAST(GETDATE() AS DATE))
+                    AND CAST(ActiveDateTo AS DATE) >= '2026-07-01'
+                    AND CAST(ActiveDateTo AS DATE) <= '2026-07-31'
                 )
                 SELECT
                     PromoID AS promo_id,

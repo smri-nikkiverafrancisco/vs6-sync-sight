@@ -35,8 +35,8 @@ public class UpcomingPromotionService {
                         ON p.XMLPromoId = pr.promoid
                     INNER JOIN promotypes pt
                         ON pr.promotypeid = pt.promotypeid AND LOWER(pt.TypeDesc) NOT LIKE '%no pos scanning%'
-                    WHERE CAST(p.ActiveDateFrom AS DATE) > CAST(GETDATE() AS DATE)
-                    AND CAST(p.ActiveDateTo AS DATE) >= CAST(p.ActiveDateFrom AS DATE)
+                    WHERE CAST(p.ActiveDateTo AS DATE) >= CAST(p.ActiveDateFrom AS DATE)
+                    AND CAST(p.ActiveDateFrom AS DATE) = CAST(DATEADD(DAY, 1, GETDATE()) AS DATE)
                 )
                 SELECT
                     PromoID AS promo_id,
@@ -68,7 +68,7 @@ public class UpcomingPromotionService {
                     ActiveDateTo,
                     total_days
                 ORDER BY
-                    promo_duration_days ASC, store_count DESC, memo_number ASC
+                    start_date ASC, promo_duration_days ASC, store_count DESC, memo_number ASC
                 """,
                 (rs, rowNum) -> {
                     int days = rs.getInt("promo_duration_days");

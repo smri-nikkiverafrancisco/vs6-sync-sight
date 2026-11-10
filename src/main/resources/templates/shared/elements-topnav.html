@@ -23,7 +23,8 @@
         </div>
 
         <div class="pills">
-            <span class="disabled" title="Coming soon">Upcoming<span class="soon">soon</span></span>
+            <a th:href="@{/sync-sight/elements/upcoming}"
+               th:classappend="${basePath == '/sync-sight/elements/upcoming'} ? 'active'">Upcoming</a>
         </div>
     </nav>
 </header>

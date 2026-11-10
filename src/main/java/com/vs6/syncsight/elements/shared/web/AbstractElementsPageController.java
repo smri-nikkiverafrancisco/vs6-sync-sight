@@ -80,6 +80,8 @@ public abstract class AbstractElementsPageController {
         return "redirect:" + basePath + "?tab=" + safeTab + "&view=" + safeView;
     }
 
+
+
     @GetMapping
     public String page(@RequestParam(defaultValue = "all") String tab,
                        @RequestParam(defaultValue = "promo") String view,
@@ -102,7 +104,7 @@ public abstract class AbstractElementsPageController {
         if (refreshed == null) {
             emptyMessage = status.running()
                     ? "Loading the data... this page reloads by itself."
-                    : "No data yet.";
+                    : noDataMessage();
         } else {
             emptyMessage = anomaliesTab ? "No anomalies found." : emptyPromosMessage;
         }
@@ -218,6 +220,11 @@ public abstract class AbstractElementsPageController {
                     n + (n == 1 ? " promo" : " promos"), rows));
         }
         return groups;
+    }
+
+    // The message shown before any data has been loaded. A page can change it.
+    protected String noDataMessage() {
+        return "No data yet.";
     }
 
     // ---------- helpers ----------
