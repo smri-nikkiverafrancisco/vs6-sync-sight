@@ -21,7 +21,7 @@ public class EndedPromotionsController extends PromotionStatusPageController {
                                      EndedSyncService syncService,
                                      EndedAnomalyDetector anomalyDetector) {
         super(coordinator, syncService, anomalyDetector,
-                "Ended Promotions - July 2026",
+                "Ended Promotions",
                 "/sync-sight/promotions/ended",
                 "No promotions ended in the last 30 days.");
     }
